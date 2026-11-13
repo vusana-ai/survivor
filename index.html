@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ksoft 서바이벌 — 로그라이크 액션</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; overflow: hidden; background: #020617; }
+    canvas { touch-action: none; }
+  </style>
+</head>
+<body class="text-slate-100 h-screen flex flex-col items-center justify-between p-2 select-none">
+
+  <!-- 상단 상태바 -->
+  <header class="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl px-4 py-2.5 flex items-center justify-between shadow-xl z-20">
+    <div class="flex items-center gap-3">
+      <div>
+        <div class="text-[11px] font-bold text-slate-400">레벨 <span id="levelVal" class="text-amber-400 text-sm font-black">1</span></div>
+        <div class="w-24 h-2 bg-slate-800 rounded-full overflow-hidden mt-1">
+          <div id="expBar" class="h-full bg-amber-400 transition-all duration-200" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="text-center">
+      <div class="text-[10px] font-bold text-slate-400">생존 시간</div>
+      <div id="timeVal" class="text-sm font-black text-emerald-400">00:00</div>
+    </div>
+    <div class="text-right">
+      <div class="text-[11px] font-bold text-slate-400">점수</div>
+      <div id="scoreVal" class="text-sm font-black text-purple-400">0</div>
+    </div>
+  </header>
+
+  <!-- 게임 캔버스 아레나 -->
+  <div class="relative w-full max-w-md flex-1 my-2 bg-slate-950 border-2 border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center">
+    <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+
+    <!-- 오버레이 (시작 / 게임오버) -->
+    <div id="overlay" class="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center gap-4 p-6 text-center z-30">
+      <h1 id="overlayTitle" class="text-2xl font-black text-amber-400">K-SURVIVOR</h1>
+      <p id="overlayDesc" class="text-xs text-slate-300">몰려오는 몬스터를 처치하고 최대한 오래 살아남으세요!</p>
+      <button id="startBtn" class="px-8 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/30 transition active:scale-95 cursor-pointer">
+        게임 시작
+      </button>
+    </div>
+
+    <!-- 레벨업 업그레이드 선택 팝업 -->
+    <div id="upgradeModal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-5 text-center z-40 hidden">
+      <h2 class="text-lg font-black text-amber-300">🎉 레벨 업! 특성을 선택하세요</h2>
+      <div id="upgradeOptions" class="flex flex-col gap-2.5 w-full max-w-xs mt-2"></div>
+    </div>
+  </div>
+
+  <!-- 모바일 가상 조이스틱 영역 안내 -->
+  <div class="w-full max-w-md bg-slate-900/60 border border-slate-800/80 rounded-xl py-2 px-3 text-center text-[11px] text-slate-400 z-20">
+    🎮 화면을 터치하고 드래그하여 이동하세요 (자동 공격)
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 화면 크기 설정
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // 게임 상태 변수
+    let gameState = 'STOP'; // STOP, PLAY, UPGRADE, GAMEOVER
+    let score = 0;
+    let gameTime = 0;
+    let gameTimer = null;
+    let spawnTimer = null;
+
+    // 플레이어 객체
+    let player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 14,
+      speed: 3.2,
+      maxHp: 100,
+      hp: 100,
+      level: 1,
+      exp: 0,
+      maxExp: 30,
+      damage: 15,
+      attackSpeed: 18, // 프레임 단위 발사 간격
+      attackCooldown: 0,
+      range: 160
+    };
+
+    let enemies = [];
+    let bullets = [];
+    let particles = [];
+    let gems = [];
+
+    // 조이스틱 터치 관리
+    let touchControl = { active: false, startX: 0, startY: 0, moveX: 0, moveY: 0 };
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (gameState !== 'PLAY') return;
+      touchControl.active = true;
+      touchControl.startX = e.clientX;
+      touchControl.startY = e.clientY;
+      touchControl.moveX = 0;
+      touchControl.moveY = 0;
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!touchControl.active || gameState !== 'PLAY') return;
+      const dx = e.clientX - touchControl.startX;
+      const dy = e.clientY - touchControl.startY;
+      const dist = Math.hypot(dx, dy);
+      const maxDist = 40;
+      if (dist > 0) {
+        touchControl.moveX = (dx / Math.max(dist, maxDist)) * player.speed;
+        touchControl.moveY = (dy / Math.max(dist, maxDist)) * player.speed;
+      }
+    });
+
+    canvas.addEventListener('pointerup', () => { touchControl.active = false; touchControl.moveX = 0; touchControl.moveY = 0; });
+    canvas.addEventListener('pointercancel', () => { touchControl.active = false; touchControl.moveX = 0; touchControl.moveY = 0; });
+
+    // 키보드 조작 (PC 지원)
+    let keys = {};
+    window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    function startGame() {
+      gameState = 'PLAY';
+      score = 0;
+      gameTime = 0;
+      enemies = [];
+      bullets = [];
+      particles = [];
+      gems = [];
+      player.x = canvas.width / 2;
+      player.y = canvas.height / 2;
+      player.hp = player.maxHp;
+      player.level = 1;
+      player.exp = 0;
+      player.maxExp = 30;
+      player.damage = 15;
+
+      document.getElementById('overlay').classList.add('hidden');
+      document.getElementById('upgradeModal').classList.add('hidden');
+
+      if (gameTimer) clearInterval(gameTimer);
+      if (spawnTimer) clearInterval(spawnTimer);
+
+      gameTimer = setInterval(() => {
+        if (gameState === 'PLAY') {
+          gameTime++;
+          let m = String(Math.floor(gameTime / 60)).padStart(2, '0');
+          let s = String(gameTime % 60).padStart(2, '0');
+          document.getElementById('timeVal').textContent = `${m}:${s}`;
+        }
+      }, 1000);
+
+      spawnTimer = setInterval(() => {
+        if (gameState === 'PLAY') spawnEnemy();
+      }, Math.max(400, 1200 - gameTime * 15));
+    }
+
+    function spawnEnemy() {
+      const edge = Math.floor(Math.random() * 4);
+      let x, y;
+      if (edge === 0) { x = Math.random() * canvas.width; y = -20; }
+      else if (edge === 1) { x = Math.random() * canvas.width; y = canvas.height + 20; }
+      else if (edge === 2) { x = -20; y = Math.random() * canvas.height; }
+      else { x = canvas.width + 20; y = Math.random() * canvas.height; }
+
+      const isElite = Math.random() < 0.15 + (gameTime / 300);
+      enemies.push({
+        x, y,
+        radius: isElite ? 16 : 11,
+        speed: isElite ? 1.4 : 1.9 + Math.random() * 0.6,
+        hp: isElite ? 45 + gameTime * 2 : 15 + gameTime,
+        maxHp: isElite ? 45 + gameTime * 2 : 15 + gameTime,
+        color: isElite ? '#ec4899' : '#f97316',
+        expVal: isElite ? 12 : 4,
+        isElite
+      });
+    }
+
+    function update() {
+      if (gameState !== 'PLAY') return;
+
+      // 플레이어 이동 (터치 또는 키보드)
+      let vx = touchControl.moveX;
+      let vy = touchControl.moveY;
+      if (keys['arrowleft'] || keys['a']) vx = -player.speed;
+      if (keys['arrowright'] || keys['d']) vx = player.speed;
+      if (keys['arrowup'] || keys['w']) vy = -player.speed;
+      if (keys['arrowdown'] || keys['s']) vy = player.speed;
+
+      player.x += vx;
+      player.y += vy;
+      player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+      player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+
+      // 자동 공격 (가장 가까운 적 발사)
+      player.attackCooldown--;
+      if (player.attackCooldown <= 0) {
+        let nearest = null;
+        let minDist = player.range;
+        enemies.forEach(e => {
+          let dist = Math.hypot(e.x - player.x, e.y - player.y);
+          if (dist < minDist) { minDist = dist; nearest = e; }
+        });
+
+        if (nearest) {
+          let angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+          bullets.push({
+            x: player.x, y: player.y,
+            vx: Math.cos(angle) * 7,
+            vy: Math.sin(angle) * 7,
+            damage: player.damage,
+            radius: 5
+          });
+          player.attackCooldown = player.attackSpeed;
+        }
+      }
+
+      // 총알 업데이트
+      bullets.forEach((b, idx) => {
+        b.x += b.vx;
+        b.y += b.vy;
+        // 화면 밖 제거
+        if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+          bullets.splice(idx, 1);
+        }
+      });
+
+      // 적 업데이트 및 충돌
+      enemies.forEach((e, eIdx) => {
+        let angle = Math.atan2(player.y - e.y, player.x - e.x);
+        e.x += Math.cos(angle) * e.speed;
+        e.y += Math.sin(angle) * e.speed;
+
+        // 플레이어 피격
+        let pDist = Math.hypot(player.x - e.x, player.y - e.y);
+        if (pDist < player.radius + e.radius) {
+          player.hp -= 0.6;
+          if (player.hp <= 0) gameOver();
+        }
+
+        // 총알 피격
+        bullets.forEach((b, bIdx) => {
+          let bDist = Math.hypot(b.x - e.x, b.y - e.y);
+          if (bDist < b.radius + e.radius) {
+            e.hp -= b.damage;
+            bullets.splice(bIdx, 1);
+            if (e.hp <= 0) {
+              score += e.isElite ? 50 : 10;
+              document.getElementById('scoreVal').textContent = score;
+              gems.push({ x: e.x, y: e.y, val: e.expVal, radius: 6 });
+              enemies.splice(eIdx, 1);
+            }
+          }
+        });
+      });
+
+      // 경험치 보석 획득
+      gems.forEach((g, gIdx) => {
+        let dist = Math.hypot(player.x - g.x, player.y - g.y);
+        if (dist < 70) { // 자석 효과
+          let angle = Math.atan2(player.y - g.y, player.x - g.x);
+          g.x += Math.cos(angle) * 5;
+          g.y += Math.sin(angle) * 5;
+        }
+        if (dist < player.radius + g.radius) {
+          player.exp += g.val;
+          gems.splice(gIdx, 1);
+          if (player.exp >= player.maxExp) levelUp();
+        }
+      });
+    }
+
+    function levelUp() {
+      player.level++;
+      player.exp = 0;
+      player.maxExp = Math.floor(player.maxExp * 1.35);
+      document.getElementById('levelVal').textContent = player.level;
+      
+      gameState = 'UPGRADE';
+      showUpgradeChoices();
+    }
+
+    function showUpgradeChoices() {
+      const modal = document.getElementById('upgradeModal');
+      const container = document.getElementById('upgradeOptions');
+      container.innerHTML = '';
+
+      const options = [
+        { title: '⚔️ 공격력 강화 (+8)', desc: '미사일의 피해량이 증가합니다.', action: () => { player.damage += 8; } },
+        { title: '⚡ 연사력 향상', desc: '공격 속도가 빨라집니다.', action: () => { player.attackSpeed = Math.max(6, player.attackSpeed - 3); } },
+        { title: '🏃 이동속도 증가', desc: '이동 기동성이 좋아집니다.', action: () => { player.speed += 0.6; } },
+        { title: '💖 최대 체력 회복', desc: '체력을 전부 회복하고 최대치가 늘어납니다.', action: () => { player.maxHp += 25; player.hp = player.maxHp; } }
+      ];
+
+      // 랜덤 3개 추출
+      let shuffled = options.sort(() => 0.5 - Math.random()).slice(0, 3);
+      shuffled.forEach(opt => {
+        let btn = document.createElement('button');
+        btn.className = 'w-full p-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-left transition cursor-pointer';
+        btn.innerHTML = `<div class="text-xs font-black text-amber-300">${opt.title}</div><div class="text-[10px] text-slate-400 mt-0.5">${opt.desc}</div>`;
+        btn.onclick = () => {
+          opt.action();
+          modal.classList.add('hidden');
+          gameState = 'PLAY';
+        };
+        container.appendChild(btn);
+      });
+
+      modal.classList.remove('hidden');
+    }
+
+    function gameOver() {
+      gameState = 'GAMEOVER';
+      clearInterval(gameTimer);
+      clearInterval(spawnTimer);
+      document.getElementById('overlayTitle').textContent = "게임 오버!";
+      document.getElementById('overlayDesc').textContent = `최종 점수: ${score}점 | 달성 레벨: Lv.${player.level}`;
+      document.getElementById('startBtn').textContent = "다시 시작하기";
+      document.getElementById('overlay').classList.remove('hidden');
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 경험치 보석 렌더링
+      gems.forEach(g => {
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 총알 렌더링
+      ctx.fillStyle = '#facc15';
+      bullets.forEach(b => {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 적 렌더링
+      enemies.forEach(e => {
+        ctx.fillStyle = e.color;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+        ctx.fill();
+        // 체력바
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(e.x - 12, e.y - e.radius - 8, 24, 4);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(e.x - 12, e.y - e.radius - 8, 24 * (e.hp / e.maxHp), 4);
+      });
+
+      // 플레이어 렌더링
+      ctx.fillStyle = '#34d399';
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#065f46';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // 플레이어 체력바
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(player.x - 18, player.y - player.radius - 10, 36, 5);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(player.x - 18, player.y - player.radius - 10, 36 * (player.hp / player.maxHp), 5);
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    loop();
+  </script>
+</body>
+</html>
