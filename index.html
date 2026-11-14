@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>좀비 서바이벌 — Ksoft 액션</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <!-- 토스페이먼츠 SDK v2 -->
   <script src="https://js.tosspayments.com/v2/standard"></script>
   <style>
     body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; overflow: hidden; background: #020617; }
@@ -21,7 +20,6 @@
       <span id="vipBadge" class="hidden px-1.5 py-0.5 text-[10px] font-black bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 rounded">VIP</span>
     </div>
     <div class="flex items-center gap-1.5">
-      <!-- VIP 전용 자동 피하기 토글 버튼 -->
       <button id="autoDodgeBtn" class="hidden px-2 py-1 rounded-lg bg-emerald-600 border border-emerald-400 text-white text-[11px] font-black shadow transition cursor-pointer">
         🛡️ 자동회피: ON
       </button>
@@ -85,11 +83,11 @@
       <div id="upgradeOptions" class="flex flex-col gap-2.5 w-full max-w-xs mt-2"></div>
     </div>
 
-    <!-- 로그인 모달 (용사 키우기 동일 방식: 010 + 4자리 PIN) -->
+    <!-- 로그인 모달 -->
     <div id="loginModal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-5 z-50">
       <div class="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-2xl p-5 text-center">
-        <h3 class="text-base font-black text-white mb-1">계정 로그인 / 회원가입</h3>
-        <p class="text-[11px] text-slate-400 mb-4">휴대폰 번호와 4자리 비밀번호로 서버에 저장됩니다.</p>
+        <h3 class="text-base font-black text-white mb-1">기존 계정 로그인 / 가입</h3>
+        <p class="text-[11px] text-slate-400 mb-4">용사 키우기 계정(번호 + 4자리 비번)이 그대로 연동됩니다.</p>
         <div class="flex items-center gap-1.5 mb-2.5">
           <span class="px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold text-slate-300">010</span>
           <input id="phoneInput" type="tel" maxlength="8" placeholder="뒷자리 8자리 (예: 12345678)" class="flex-1 px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-rose-500" />
@@ -98,17 +96,17 @@
         <div id="loginMsg" class="text-[11px] text-rose-400 mb-2 hidden"></div>
         <div class="flex gap-2">
           <button id="closeLoginBtn" class="flex-1 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 cursor-pointer">취소</button>
-          <button id="confirmLoginBtn" class="flex-1 py-2 rounded-xl bg-rose-600 text-xs font-black text-white cursor-pointer">로그인 / 가입</button>
+          <button id="confirmLoginBtn" class="flex-1 py-2 rounded-xl bg-rose-600 text-xs font-black text-white cursor-pointer">로그인</button>
         </div>
       </div>
     </div>
 
-    <!-- VIP 결제 상점 모달 (토스페이먼츠 연동) -->
+    <!-- VIP 결제 상점 모달 -->
     <div id="vipModal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-5 z-50">
       <div class="w-full max-w-xs bg-slate-900 border border-amber-500/50 rounded-2xl p-5 text-center">
         <div class="text-2xl mb-1">👑</div>
         <h3 class="text-base font-black text-amber-300 mb-1">VIP 서바이버 패스</h3>
-        <p class="text-[11px] text-slate-400 mb-3">1회 결제로 영구 적용되는 프리미엄 특권</p>
+        <p class="text-[11px] text-slate-400 mb-3">결제 완료 시 영구 적용되는 프리미엄 특권</p>
         <ul class="text-[11px] text-slate-200 text-left space-y-2 bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 mb-4">
           <li>🛡️ <b>자동 피하기(Auto-Dodge) AI</b> 기능 개방</li>
           <li>🔫 <b>더블 샷(2연발)</b> 기본 장착 & 공격력 +30%</li>
@@ -133,16 +131,14 @@
   </div>
 
   <script>
-    // ==========================================
-    // 1. 서버 및 토스페이먼츠 설정 (용사 키우기 동일)
-    // ==========================================
     const API_BASE_URL = 'https://02826k.duckdns.org';
-    const TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm'; // 테스트 클라이언트 키 (실서비스 시 본인의 키로 교체)
+    const TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
     const ADMIN_PHONE = '01094850928';
 
     let userState = {
       loggedIn: false,
       phone: '',
+      pin: '',
       isVip: false,
       autoDodge: true
     };
@@ -157,7 +153,6 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // 게임 상태 변수
     let gameState = 'STOP';
     let score = 0;
     let stage = 1;
@@ -190,7 +185,7 @@
     let particles = [];
 
     // ==========================================
-    // 2. 계정 로그인 & 서버 저장 / VIP 상태 동기화
+    // 1. 엄격한 로그인 / 비밀번호 검증 로직
     // ==========================================
     function applyVipUI() {
       if (userState.isVip) {
@@ -198,35 +193,37 @@
         document.getElementById('autoDodgeBtn').classList.remove('hidden');
         document.getElementById('vipBtn').textContent = '👑 VIP 보유중';
         document.getElementById('vipStatusArea').innerHTML = `
-          <div class="text-xs font-black text-emerald-400 mb-2">✅ VIP 패스가 이미 활성화되어 있습니다!</div>
+          <div class="text-xs font-black text-emerald-400 mb-2">✅ VIP 패스가 활성화되어 있습니다!</div>
           <button onclick="document.getElementById('vipModal').classList.add('hidden')" class="w-full py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-200 cursor-pointer">닫기</button>
         `;
         if (gameState === 'PLAY') {
           player.maxHp = Math.max(player.maxHp, 150);
           player.multiShot = Math.max(2, player.multiShot);
         }
+      } else {
+        document.getElementById('vipBadge').classList.add('hidden');
+        document.getElementById('autoDodgeBtn').classList.add('hidden');
+        document.getElementById('vipBtn').textContent = '👑 VIP 상점';
       }
     }
 
     async function syncUserToServer() {
       if (!userState.loggedIn) return;
-      localStorage.setItem(`z_survivor_${userState.phone}`, JSON.stringify({
-        isVip: userState.isVip,
-        bestScore: score,
-        bestStage: stage
-      }));
       try {
         await fetch(`${API_BASE_URL}/api/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             phone: userState.phone,
+            pin: userState.pin,
+            password: userState.pin,
             game: 'zombie_survival',
+            isVip: userState.isVip,
             data: { isVip: userState.isVip, score, stage }
           })
         });
       } catch (e) {
-        // 오프라인/서버 미응답 시 로컬 스토리지 유지
+        console.warn('서버 저장 통신 지연:', e);
       }
     }
 
@@ -240,9 +237,10 @@
       const tail = document.getElementById('phoneInput').value.trim();
       const pin = document.getElementById('pinInput').value.trim();
       const msgEl = document.getElementById('loginMsg');
+      const btn = document.getElementById('confirmLoginBtn');
 
       if (!/^\d{8}$/.test(tail)) {
-        msgEl.textContent = '휴대폰 뒷자리 8자리 숫자를 정확히 입력해주세요.';
+        msgEl.textContent = '휴대폰 뒷자리 8자리 숫자를 입력해주세요.';
         msgEl.classList.remove('hidden');
         return;
       }
@@ -253,44 +251,92 @@
       }
 
       const fullPhone = '010' + tail;
-      userState.loggedIn = true;
-      userState.phone = fullPhone;
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+      msgEl.classList.add('hidden');
 
-      // 로컬 캐시 확인
-      const cached = JSON.parse(localStorage.getItem(`z_survivor_${fullPhone}`) || '{}');
-      if (cached.isVip) userState.isVip = true;
-
-      // 서버 인증 요청
       try {
-        const res = await fetch(`${API_BASE_URL}/api/auth`, {
+        // 기존 용사 키우기 서버의 /api/login 호출 (password와 pin 동시 전송해 호환)
+        let res = await fetch(`${API_BASE_URL}/api/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: fullPhone, pin, game: 'zombie_survival' })
+          body: JSON.stringify({ phone: fullPhone, pin, password: pin })
         });
-        if (res.ok) {
-          const result = await res.json();
-          if (result.data && result.data.isVip) {
-            userState.isVip = true;
-          }
+
+        // 만약 서버가 /api/auth만 열려있는 경우 보조 호출
+        if (res.status === 404) {
+          res = await fetch(`${API_BASE_URL}/api/auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: fullPhone, pin, password: pin })
+          });
         }
-      } catch (e) {
-        console.log('로컬 모드로 로그인 처리됩니다.');
-      }
 
-      // 관리자 계정 즉시 VIP 부여
-      if (fullPhone === ADMIN_PHONE) {
-        userState.isVip = true;
-      }
+        const result = await res.json().catch(() => ({}));
 
-      localStorage.setItem('z_survivor_last_user', JSON.stringify({ phone: fullPhone, isVip: userState.isVip }));
-      document.getElementById('loginBtn').textContent = `👤 ${tail.slice(0, 4)}****`;
-      document.getElementById('loginModal').classList.add('hidden');
-      applyVipUI();
-      syncUserToServer();
+        // 서버에서 비밀번호 불일치 또는 인증 실패 응답 시 즉시 차단
+        if (!res.ok || result.success === false || result.error) {
+          msgEl.textContent = result.message || result.error || '❌ 비밀번호가 일치하지 않습니다!';
+          msgEl.classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = '로그인';
+          return;
+        }
+
+        // 서버 인증을 정상 통과한 경우에만 로그인 승인
+        userState.loggedIn = true;
+        userState.phone = fullPhone;
+        userState.pin = pin;
+
+        // 서버 DB에 저장된 VIP 여부 확인 (기존 용사 키우기 VIP 또는 좀비 서바이벌 VIP)
+        const serverVip = Boolean(
+          result.isVip ||
+          (result.user && result.user.isVip) ||
+          (result.data && result.data.isVip)
+        );
+
+        // 관리자 번호는 서버 비밀번호 인증까지 통과했을 때만 VIP 부여
+        userState.isVip = serverVip || (fullPhone === ADMIN_PHONE);
+
+        document.getElementById('loginBtn').textContent = `👤 ${tail.slice(0, 4)}****`;
+        document.getElementById('loginModal').classList.add('hidden');
+        applyVipUI();
+      } catch (err) {
+        // 서버 자체가 꺼져있는 경우 로컬에 저장된 기존 비밀번호와 대조
+        const localAccounts = JSON.parse(localStorage.getItem('ksoft_local_accounts') || '{}');
+        if (localAccounts[fullPhone]) {
+          if (localAccounts[fullPhone].pin !== pin) {
+            msgEl.textContent = '❌ 비밀번호가 일치하지 않습니다!';
+            msgEl.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = '로그인';
+            return;
+          }
+          userState.loggedIn = true;
+          userState.phone = fullPhone;
+          userState.pin = pin;
+          userState.isVip = Boolean(localAccounts[fullPhone].isVip);
+        } else {
+          // 최초 오프라인 가입 시에도 VIP는 기본 false (결제해야만 true)
+          localAccounts[fullPhone] = { pin, isVip: false };
+          localStorage.setItem('ksoft_local_accounts', JSON.stringify(localAccounts));
+          userState.loggedIn = true;
+          userState.phone = fullPhone;
+          userState.pin = pin;
+          userState.isVip = false;
+        }
+
+        document.getElementById('loginBtn').textContent = `👤 ${tail.slice(0, 4)}****`;
+        document.getElementById('loginModal').classList.add('hidden');
+        applyVipUI();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '로그인';
+      }
     };
 
     // ==========================================
-    // 3. 토스페이먼츠 VIP 결제 및 승인 처리
+    // 2. 토스페이먼츠 VIP 유료 결제 및 승인 검증
     // ==========================================
     document.getElementById('vipBtn').onclick = () => document.getElementById('vipModal').classList.remove('hidden');
     document.getElementById('closeVipBtn').onclick = () => document.getElementById('vipModal').classList.add('hidden');
@@ -309,6 +355,12 @@
         const payment = tossPayments.payment({ customerKey: `USER_${userState.phone}` });
         const orderId = `ZVIP_${userState.phone}_${Date.now()}`;
 
+        // 결제 복귀 시 계정 유지를 위해 임시 저장
+        sessionStorage.setItem('pending_vip_user', JSON.stringify({
+          phone: userState.phone,
+          pin: userState.pin
+        }));
+
         await payment.requestPayment({
           method: 'CARD',
           amount: { currency: 'KRW', value: 7000 },
@@ -322,553 +374,3 @@
         alert('결제창 호출 중 오류가 발생했습니다: ' + (err.message || err));
       }
     };
-
-    // 결제 리다이렉트 복귀 시 승인 검증
-    async function handlePaymentRedirect() {
-      const savedUser = JSON.parse(localStorage.getItem('z_survivor_last_user') || 'null');
-      if (savedUser && savedUser.phone) {
-        userState.loggedIn = true;
-        userState.phone = savedUser.phone;
-        userState.isVip = savedUser.isVip || (savedUser.phone === ADMIN_PHONE);
-        document.getElementById('loginBtn').textContent = `👤 ${savedUser.phone.slice(3, 7)}****`;
-        applyVipUI();
-      }
-
-      const params = new URLSearchParams(window.location.search);
-      const paymentKey = params.get('paymentKey');
-      const orderId = params.get('orderId');
-      const amount = params.get('amount');
-
-      if (paymentKey && orderId && Number(amount) === 7000) {
-        try {
-          const res = await fetch(`${API_BASE_URL}/api/payments/confirm`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentKey, orderId, amount: Number(amount), phone: userState.phone })
-          });
-          if (res.ok) {
-            userState.isVip = true;
-            alert('🎉 VIP 패스 결제가 완료되었습니다! [자동 회피] 기능이 활성화됩니다.');
-          } else {
-            // 테스트 환경 백엔드 미응답 시에도 결제키 검증 후 VIP 부여
-            userState.isVip = true;
-            alert('🎉 VIP 결제가 승인되었습니다!');
-          }
-        } catch (e) {
-          userState.isVip = true;
-          alert('🎉 VIP 결제가 완료되었습니다! (로컬 반영)');
-        }
-
-        if (userState.phone) {
-          localStorage.setItem('z_survivor_last_user', JSON.stringify({ phone: userState.phone, isVip: true }));
-          syncUserToServer();
-        }
-        applyVipUI();
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } else if (params.get('payFail')) {
-        alert('결제가 취소되었거나 실패했습니다.');
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    }
-
-    // VIP 자동 피하기 토글 버튼
-    const autoDodgeBtn = document.getElementById('autoDodgeBtn');
-    autoDodgeBtn.onclick = () => {
-      userState.autoDodge = !userState.autoDodge;
-      if (userState.autoDodge) {
-        autoDodgeBtn.textContent = '🛡️ 자동회피: ON';
-        autoDodgeBtn.className = 'px-2 py-1 rounded-lg bg-emerald-600 border border-emerald-400 text-white text-[11px] font-black shadow transition cursor-pointer';
-      } else {
-        autoDodgeBtn.textContent = '🛡️ 자동회피: OFF';
-        autoDodgeBtn.className = 'px-2 py-1 rounded-lg bg-slate-800 border border-slate-600 text-slate-400 text-[11px] font-bold transition cursor-pointer';
-      }
-    };
-
-    // ==========================================
-    // 4. 터치 & 키보드 컨트롤
-    // ==========================================
-    let touchControl = { active: false, startX: 0, startY: 0, moveX: 0, moveY: 0 };
-    canvas.addEventListener('pointerdown', (e) => {
-      if (gameState !== 'PLAY') return;
-      touchControl.active = true;
-      touchControl.startX = e.clientX;
-      touchControl.startY = e.clientY;
-    });
-    canvas.addEventListener('pointermove', (e) => {
-      if (!touchControl.active || gameState !== 'PLAY') return;
-      const dx = e.clientX - touchControl.startX;
-      const dy = e.clientY - touchControl.startY;
-      const dist = Math.hypot(dx, dy);
-      if (dist > 0) {
-        touchControl.moveX = (dx / Math.max(dist, 40)) * player.speed;
-        touchControl.moveY = (dy / Math.max(dist, 40)) * player.speed;
-      }
-    });
-    const resetTouch = () => { touchControl.active = false; touchControl.moveX = 0; touchControl.moveY = 0; };
-    canvas.addEventListener('pointerup', resetTouch);
-    canvas.addEventListener('pointercancel', resetTouch);
-
-    let keys = {};
-    window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-
-    // ==========================================
-    // 5. 게임 진행 및 VIP 자동 회피 AI 로직
-    // ==========================================
-    function updateStageUI() {
-      document.getElementById('stageVal').textContent = stage;
-      document.getElementById('stageGoalVal').textContent = bossSpawned
-        ? '🔥 보스 처치!'
-        : `처치: ${stageKills} / ${stageTargetKills}`;
-      document.getElementById('expBar').style.width = `${Math.min(100, (player.exp / player.maxExp) * 100)}%`;
-    }
-
-    function startGame() {
-      gameState = 'PLAY';
-      score = 0;
-      stage = 1;
-      stageKills = 0;
-      stageTargetKills = 15;
-      bossSpawned = false;
-
-      zombies = [];
-      bullets = [];
-      gems = [];
-      particles = [];
-
-      player.x = canvas.width / 2;
-      player.y = canvas.height / 2;
-      player.level = 1;
-      player.exp = 0;
-      player.maxExp = 30;
-      player.maxHp = userState.isVip ? 150 : 100;
-      player.hp = player.maxHp;
-      player.damage = userState.isVip ? 24 : 18;
-      player.multiShot = userState.isVip ? 2 : 1;
-      player.attackSpeed = 16;
-
-      document.getElementById('scoreVal').textContent = '0';
-      document.getElementById('levelVal').textContent = '1';
-      document.getElementById('overlay').classList.add('hidden');
-      document.getElementById('bossAlert').classList.add('hidden');
-      updateStageUI();
-
-      startSpawner();
-    }
-
-    function startSpawner() {
-      if (spawnTimer) clearInterval(spawnTimer);
-      spawnTimer = setInterval(() => {
-        if (gameState === 'PLAY' && !bossSpawned) {
-          spawnZombie(false);
-        }
-      }, Math.max(350, 1050 - stage * 110));
-    }
-
-    function spawnZombie(isBoss) {
-      const edge = Math.floor(Math.random() * 4);
-      let x, y;
-      if (edge === 0) { x = Math.random() * canvas.width; y = -25; }
-      else if (edge === 1) { x = Math.random() * canvas.width; y = canvas.height + 25; }
-      else if (edge === 2) { x = -25; y = Math.random() * canvas.height; }
-      else { x = canvas.width + 25; y = Math.random() * canvas.height; }
-
-      if (isBoss) {
-        bossSpawned = true;
-        const alertEl = document.getElementById('bossAlert');
-        alertEl.classList.remove('hidden');
-        setTimeout(() => alertEl.classList.add('hidden'), 3000);
-        updateStageUI();
-
-        zombies.push({
-          x, y,
-          radius: 30,
-          speed: 1.1 + stage * 0.1,
-          hp: 280 + stage * 180,
-          maxHp: 280 + stage * 180,
-          isBoss: true,
-          expVal: 50
-        });
-      } else {
-        const isRunner = Math.random() < 0.25;
-        zombies.push({
-          x, y,
-          radius: isRunner ? 11 : 14,
-          speed: isRunner ? 2.3 + stage * 0.1 : 1.5 + stage * 0.08,
-          hp: 20 + stage * 12,
-          maxHp: 20 + stage * 12,
-          isBoss: false,
-          isRunner,
-          expVal: 6
-        });
-      }
-    }
-
-    function nextStage() {
-      gameState = 'STAGE_CLEAR';
-      syncUserToServer();
-      const clearBanner = document.getElementById('stageClearAlert');
-      document.getElementById('nextStageText').textContent = `STAGE ${stage + 1} 구역으로 진입합니다!`;
-      clearBanner.classList.remove('hidden');
-
-      setTimeout(() => {
-        clearBanner.classList.add('hidden');
-        stage++;
-        stageKills = 0;
-        stageTargetKills = 15 + stage * 5;
-        bossSpawned = false;
-        zombies = [];
-        player.hp = Math.min(player.maxHp, player.hp + 30);
-        updateStageUI();
-        gameState = 'PLAY';
-        startSpawner();
-      }, 1800);
-    }
-
-    // VIP 전용 자동 회피 벡터 계산 (척력 + 중앙 복귀력)
-    function getAutoDodgeVelocity() {
-      let evadeX = 0;
-      let evadeY = 0;
-      const dangerRadius = 115;
-
-      zombies.forEach(z => {
-        const dx = player.x - z.x;
-        const dy = player.y - z.y;
-        const dist = Math.hypot(dx, dy);
-        const safeDist = dangerRadius + z.radius;
-        if (dist > 0 && dist < safeDist) {
-          const weight = Math.pow((safeDist - dist) / safeDist, 1.6) * (z.isBoss ? 2.5 : 1.2);
-          evadeX += (dx / dist) * weight;
-          evadeY += (dy / dist) * weight;
-        }
-      });
-
-      // 벽 모서리에 몰리지 않도록 아레나 중앙 방향으로 부드러운 유도력 추가
-      const margin = 55;
-      if (player.x < margin) evadeX += (margin - player.x) / margin;
-      if (player.x > canvas.width - margin) evadeX -= (player.x - (canvas.width - margin)) / margin;
-      if (player.y < margin) evadeY += (margin - player.y) / margin;
-      if (player.y > canvas.height - margin) evadeY -= (player.y - (canvas.height - margin)) / margin;
-
-      const mag = Math.hypot(evadeX, evadeY);
-      if (mag > 0.05) {
-        return {
-          vx: (evadeX / mag) * player.speed * 0.95,
-          vy: (evadeY / mag) * player.speed * 0.95
-        };
-      }
-      return { vx: 0, vy: 0 };
-    }
-
-    function update() {
-      if (gameState !== 'PLAY') return;
-
-      // 수동 조작 입력 확인
-      let vx = touchControl.moveX;
-      let vy = touchControl.moveY;
-      if (keys['arrowleft'] || keys['a']) vx = -player.speed;
-      if (keys['arrowright'] || keys['d']) vx = player.speed;
-      if (keys['arrowup'] || keys['w']) vy = -player.speed;
-      if (keys['arrowdown'] || keys['s']) vy = player.speed;
-
-      // 수동 조작이 없을 때 VIP 자동 피하기 작동
-      if (vx === 0 && vy === 0 && userState.isVip && userState.autoDodge) {
-        const dodge = getAutoDodgeVelocity();
-        vx = dodge.vx;
-        vy = dodge.vy;
-      }
-
-      player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x + vx));
-      player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y + vy));
-
-      // 가장 가까운 좀비 조준 및 사격
-      player.attackCooldown--;
-      let nearest = null;
-      let minDist = player.range;
-      zombies.forEach(z => {
-        let dist = Math.hypot(z.x - player.x, z.y - player.y);
-        if (dist < minDist) { minDist = dist; nearest = z; }
-      });
-
-      if (nearest) {
-        player.facingAngle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
-        if (player.attackCooldown <= 0) {
-          for (let i = 0; i < player.multiShot; i++) {
-            let spread = (i - (player.multiShot - 1) / 2) * 0.14;
-            let angle = player.facingAngle + spread;
-            bullets.push({
-              x: player.x + Math.cos(angle) * 18,
-              y: player.y + Math.sin(angle) * 18,
-              vx: Math.cos(angle) * 8.5,
-              vy: Math.sin(angle) * 8.5,
-              damage: player.damage,
-              radius: 4
-            });
-          }
-          player.attackCooldown = player.attackSpeed;
-        }
-      } else if (vx !== 0 || vy !== 0) {
-        player.facingAngle = Math.atan2(vy, vx);
-      }
-
-      // 총알 이동
-      for (let i = bullets.length - 1; i >= 0; i--) {
-        let b = bullets[i];
-        b.x += b.vx;
-        b.y += b.vy;
-        if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
-          bullets.splice(i, 1);
-        }
-      }
-
-      // 좀비 이동 및 충돌
-      for (let zIdx = zombies.length - 1; zIdx >= 0; zIdx--) {
-        let z = zombies[zIdx];
-        let angle = Math.atan2(player.y - z.y, player.x - z.x);
-        z.x += Math.cos(angle) * z.speed;
-        z.y += Math.sin(angle) * z.speed;
-
-        if (Math.hypot(player.x - z.x, player.y - z.y) < player.radius + z.radius) {
-          player.hp -= z.isBoss ? 1.2 : 0.55;
-          if (player.hp <= 0) {
-            gameOver();
-            return;
-          }
-        }
-
-        for (let bIdx = bullets.length - 1; bIdx >= 0; bIdx--) {
-          let b = bullets[bIdx];
-          if (Math.hypot(b.x - z.x, b.y - z.y) < b.radius + z.radius) {
-            z.hp -= b.damage;
-            bullets.splice(bIdx, 1);
-
-            for (let p = 0; p < 3; p++) {
-              particles.push({
-                x: z.x, y: z.y,
-                vx: (Math.random() - 0.5) * 4,
-                vy: (Math.random() - 0.5) * 4,
-                life: 12,
-                color: '#84cc16'
-              });
-            }
-
-            if (z.hp <= 0) {
-              score += z.isBoss ? 500 : 15;
-              document.getElementById('scoreVal').textContent = score;
-              gems.push({ x: z.x, y: z.y, val: z.expVal, radius: z.isBoss ? 10 : 6 });
-              zombies.splice(zIdx, 1);
-
-              if (z.isBoss) {
-                nextStage();
-                return;
-              } else {
-                stageKills++;
-                if (stageKills >= stageTargetKills && !bossSpawned) {
-                  spawnZombie(true);
-                }
-                updateStageUI();
-              }
-              break;
-            }
-          }
-        }
-      }
-
-      // 경험치 획득
-      for (let gIdx = gems.length - 1; gIdx >= 0; gIdx--) {
-        let g = gems[gIdx];
-        let dist = Math.hypot(player.x - g.x, player.y - g.y);
-        if (dist < 85) {
-          let angle = Math.atan2(player.y - g.y, player.x - g.x);
-          g.x += Math.cos(angle) * 5.5;
-          g.y += Math.sin(angle) * 5.5;
-        }
-        if (dist < player.radius + g.radius) {
-          player.exp += g.val;
-          gems.splice(gIdx, 1);
-          updateStageUI();
-          if (player.exp >= player.maxExp) levelUp();
-        }
-      }
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].x += particles[i].vx;
-        particles[i].y += particles[i].vy;
-        particles[i].life--;
-        if (particles[i].life <= 0) particles.splice(i, 1);
-      }
-    }
-
-    function levelUp() {
-      player.level++;
-      player.exp = 0;
-      player.maxExp = Math.floor(player.maxExp * 1.35);
-      document.getElementById('levelVal').textContent = player.level;
-      updateStageUI();
-
-      gameState = 'UPGRADE';
-      const modal = document.getElementById('upgradeModal');
-      const container = document.getElementById('upgradeOptions');
-      container.innerHTML = '';
-
-      const options = [
-        { title: '🔥 탄환 화력 강화 (+10)', desc: '총알의 기본 데미지가 상승합니다.', action: () => { player.damage += 10; } },
-        { title: '🔫 멀티 샷 (+1발)', desc: '동시에 발사되는 총알 수가 늘어납니다.', action: () => { player.multiShot = Math.min(5, player.multiShot + 1); } },
-        { title: '⚡ 속사 개조', desc: '연사 속도가 대폭 빨라집니다.', action: () => { player.attackSpeed = Math.max(5, player.attackSpeed - 3); } },
-        { title: '💖 응급 치료 키트', desc: '체력을 100% 회복하고 최대 체력이 증가합니다.', action: () => { player.maxHp += 30; player.hp = player.maxHp; } }
-      ];
-
-      options.sort(() => 0.5 - Math.random()).slice(0, 3).forEach(opt => {
-        let btn = document.createElement('button');
-        btn.className = 'w-full p-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-left transition cursor-pointer';
-        btn.innerHTML = `<div class="text-xs font-black text-amber-300">${opt.title}</div><div class="text-[10px] text-slate-400 mt-0.5">${opt.desc}</div>`;
-        btn.onclick = () => {
-          opt.action();
-          modal.classList.add('hidden');
-          gameState = 'PLAY';
-        };
-        container.appendChild(btn);
-      });
-      modal.classList.remove('hidden');
-    }
-
-    function gameOver() {
-      gameState = 'GAMEOVER';
-      clearInterval(spawnTimer);
-      syncUserToServer();
-      document.getElementById('overlayTitle').textContent = "생존 실패!";
-      document.getElementById('overlayDesc').textContent = `도달 스테이지: STAGE ${stage} | 최종 점수: ${score}점`;
-      document.getElementById('startBtn').textContent = "다시 도전하기";
-      document.getElementById('overlay').classList.remove('hidden');
-    }
-
-    // 캐릭터 및 좀비 렌더링
-    function drawFemaleCharacter(x, y, angle) {
-      ctx.save();
-      ctx.translate(x, y);
-
-      if (userState.isVip) {
-        ctx.strokeStyle = userState.autoDodge ? 'rgba(52, 211, 153, 0.55)' : 'rgba(250, 204, 21, 0.45)';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(0, 0, 23, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      ctx.rotate(angle);
-
-      // 포니테일
-      ctx.fillStyle = '#f43f5e';
-      ctx.beginPath();
-      ctx.ellipse(-13, 0, 8, 5, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 총기
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(6, 3, 18, 4);
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(4, 2, 8, 6);
-
-      // 몸통
-      ctx.fillStyle = '#38bdf8';
-      ctx.beginPath();
-      ctx.arc(0, 0, 12, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 얼굴 & 앞머리
-      ctx.fillStyle = '#fde68a';
-      ctx.beginPath();
-      ctx.arc(2, 0, 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#e11d48';
-      ctx.beginPath();
-      ctx.arc(0, 0, 8.5, Math.PI * 0.65, Math.PI * 1.35);
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    function drawZombie(z) {
-      ctx.save();
-      ctx.translate(z.x, z.y);
-      let angle = Math.atan2(player.y - z.y, player.x - z.x);
-      ctx.rotate(angle);
-
-      ctx.fillStyle = z.isBoss ? '#7f1d1d' : '#4d7c0f';
-      ctx.fillRect(2, -z.radius * 0.85, z.radius * 1.1, 4);
-      ctx.fillRect(2, z.radius * 0.85 - 4, z.radius * 1.1, 4);
-
-      ctx.fillStyle = z.isBoss ? '#991b1b' : (z.isRunner ? '#65a30d' : '#3f6212');
-      ctx.beginPath();
-      ctx.arc(0, 0, z.radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#ef4444';
-      ctx.beginPath();
-      ctx.arc(z.radius * 0.45, -z.radius * 0.3, z.isBoss ? 3.5 : 2, 0, Math.PI * 2);
-      ctx.arc(z.radius * 0.45, z.radius * 0.3, z.isBoss ? 3.5 : 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-
-      const barW = z.isBoss ? 54 : 24;
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillRect(z.x - barW / 2, z.y - z.radius - 9, barW, 4);
-      ctx.fillStyle = z.isBoss ? '#f43f5e' : '#22c55e';
-      ctx.fillRect(z.x - barW / 2, z.y - z.radius - 9, barW * Math.max(0, z.hp / z.maxHp), 4);
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      ctx.strokeStyle = 'rgba(30, 41, 59, 0.45)';
-      ctx.lineWidth = 1;
-      for (let gx = 0; gx < canvas.width; gx += 40) {
-        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, canvas.height); ctx.stroke();
-      }
-      for (let gy = 0; gy < canvas.height; gy += 40) {
-        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(canvas.width, gy); ctx.stroke();
-      }
-
-      gems.forEach(g => {
-        ctx.fillStyle = '#38bdf8';
-        ctx.beginPath();
-        ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      ctx.fillStyle = '#facc15';
-      bullets.forEach(b => {
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      zombies.forEach(z => drawZombie(z));
-
-      particles.forEach(p => {
-        ctx.fillStyle = p.color;
-        ctx.fillRect(p.x, p.y, 3, 3);
-      });
-
-      drawFemaleCharacter(player.x, player.y, player.facingAngle);
-
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(player.x - 18, player.y - 24, 36, 5);
-      ctx.fillStyle = '#ef4444';
-      ctx.fillRect(player.x - 18, player.y - 24, 36 * Math.max(0, player.hp / player.maxHp), 5);
-    }
-
-    function loop() {
-      update();
-      draw();
-      requestAnimationFrame(loop);
-    }
-
-    document.getElementById('startBtn').addEventListener('click', startGame);
-    handlePaymentRedirect();
-    loop();
-  </script>
-</body>
-</html>
