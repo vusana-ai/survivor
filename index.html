@@ -91,9 +91,7 @@
           🔐
         </div>
         <h3 class="text-lg font-black text-amber-300">AI게임장 통합 계정</h3>
-        <p class="text-[11px] text-slate-400 mt-1 mb-3">
-          용사 키우기 계정(010 번호 + 4자리 PIN)과<br/>동일한 DB로 VIP 및 기록이 연동됩니다.
-        </p>
+<div class="mb-3"></div>
 
         <div class="flex rounded-xl bg-slate-950 p-1 border border-slate-800 mb-3">
           <button type="button" id="modeLoginBtn" class="flex-1 py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-slate-950 transition cursor-pointer">
@@ -154,7 +152,7 @@
       <div class="w-full max-w-xs bg-slate-900 border border-amber-500/50 rounded-2xl p-5 text-center">
         <div class="text-2xl mb-1">👑</div>
         <h3 class="text-base font-black text-amber-300 mb-1">VIP 서바이버 패스</h3>
-        <p class="text-[11px] text-slate-400 mb-3">결제 완료 시 영구 적용되는 프리미엄 특권</p>
+        <p class="text-[11px] text-amber-200/90 font-semibold mb-3">1회 결제 시 AI게임장 모든 게임에 VIP 혜택이 적용됩니다!</p>
         <ul class="text-[11px] text-slate-200 text-left space-y-2 bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 mb-4">
           <li>🛡️ <b>자동 피하기(Auto-Dodge) AI</b> 기능 개방</li>
           <li>🔫 <b>더블 샷(2연발)</b> 기본 장착 & 공격력 +30%</li>
@@ -192,9 +190,32 @@
   </section>
 
   <script>
-    const TUNNEL_URL = 'https://partial-catering-vatican-accounting.trycloudflare.com';
     const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const API_BASE_URL = isLocalHost ? '' : TUNNEL_URL;
+    const API_CANDIDATES = isLocalHost
+      ? ['']
+      : [
+          'https://02826k.duckdns.org',
+          'https://partial-catering-vatican-accounting.trycloudflare.com'
+        ];
+    let API_BASE_URL = API_CANDIDATES[0];
+
+    async function apiFetch(endpoint, options = {}) {
+      let lastErr = null;
+      const ordered = [API_BASE_URL, ...API_CANDIDATES.filter(u => u !== API_BASE_URL)];
+      for (const base of ordered) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 5000);
+          const res = await fetch(`${base}${endpoint}`, { ...options, signal: controller.signal });
+          clearTimeout(timer);
+          API_BASE_URL = base;
+          return res;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw lastErr || new Error('서버 연결 실패');
+    }
     const TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
     const ADMIN_VIP_PHONES = ['010-9485-0928'];
     const TOKEN_KEY = 'hero_clicker_jwt_token';
@@ -316,7 +337,7 @@
         };
         userState.serverSaveData = baseSave;
 
-        const res = await fetch(`${API_BASE_URL}/api/save`, {
+        const res = await apiFetch('/api/save', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -339,7 +360,7 @@
     async function restoreSessionFromToken() {
       if (!userState.token || !userState.username) return;
       try {
-        const res = await fetch(`${API_BASE_URL}/api/load`, {
+        const res = await apiFetch('/api/load', {
           headers: { 'Authorization': `Bearer ${userState.token}` }
         });
         if (!res.ok) {
@@ -444,7 +465,7 @@
         : { username: fullPhoneId, password: pin };
 
       try {
-        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        const res = await apiFetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -479,8 +500,45 @@
         pinInputEl.value = '';
         applyVipUI();
       } catch (err) {
-        msgEl.textContent = '⚠️ 게임 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
-        msgEl.classList.remove('hidden');
+        // 모든 원격 서버 연결 불가 시 로컬 통합 계정으로 안전하게 로그인/가입 처리
+        const localAccounts = JSON.parse(localStorage.getItem('aigame_shared_accounts') || '{}');
+        if (!isRegisterMode && localAccounts[fullPhoneId]) {
+          if (localAccounts[fullPhoneId].pin !== pin) {
+            msgEl.textContent = '❌ 비밀번호가 일치하지 않습니다!';
+            msgEl.classList.remove('hidden');
+            return;
+          }
+          userState.isVip = Boolean(localAccounts[fullPhoneId].isVip || isAdminAccount(fullPhoneId));
+        } else {
+          const existingVip = Boolean(localAccounts[fullPhoneId]?.isVip || isAdminAccount(fullPhoneId));
+          localAccounts[fullPhoneId] = { pin, isVip: existingVip };
+          localStorage.setItem('aigame_shared_accounts', JSON.stringify(localAccounts));
+          userState.isVip = existingVip;
+        }
+
+        // 동일 도메인 내 용사 키우기 저장 데이터에도 VIP 동기화
+        try {
+          const heroRaw = localStorage.getItem('hero_clicker_rpg_save_v1');
+          if (heroRaw) {
+            const heroSave = JSON.parse(heroRaw);
+            if (heroSave.isVip) userState.isVip = true;
+            else if (userState.isVip) {
+              heroSave.isVip = true;
+              localStorage.setItem('hero_clicker_rpg_save_v1', JSON.stringify(heroSave));
+            }
+          }
+        } catch (e) {}
+
+        userState.loggedIn = true;
+        userState.username = fullPhoneId;
+        userState.phone = '010' + rawDigits;
+        userState.pin = pin;
+        localStorage.setItem(USER_KEY, userState.username);
+
+        updateLoginButtonUI();
+        document.getElementById('loginModal').classList.add('hidden');
+        pinInputEl.value = '';
+        applyVipUI();
       } finally {
         confirmLoginBtn.disabled = false;
         confirmLoginBtn.textContent = isRegisterMode ? '회원가입' : '로그인';
@@ -542,7 +600,7 @@
         }
 
         try {
-          const res = await fetch(`${API_BASE_URL}/api/payments/confirm`, {
+          const res = await apiFetch('/api/payments/confirm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -556,12 +614,19 @@
 
           if (res.ok && confirmData.success !== false) {
             userState.isVip = true;
-            if (userState.phone) {
-              const localAccounts = JSON.parse(localStorage.getItem('aigame_vip_cache') || '{}');
-              if (localAccounts[userState.phone]) {
-                localAccounts[userState.phone].isVip = true;
-                localStorage.setItem('aigame_vip_cache', JSON.stringify(localAccounts));
-              }
+            if (userState.username || userState.phone) {
+              const key = userState.username || userState.phone;
+              const localAccounts = JSON.parse(localStorage.getItem('aigame_shared_accounts') || '{}');
+              localAccounts[key] = { ...(localAccounts[key] || {}), isVip: true };
+              localStorage.setItem('aigame_shared_accounts', JSON.stringify(localAccounts));
+              try {
+                const heroRaw = localStorage.getItem('hero_clicker_rpg_save_v1');
+                if (heroRaw) {
+                  const heroSave = JSON.parse(heroRaw);
+                  heroSave.isVip = true;
+                  localStorage.setItem('hero_clicker_rpg_save_v1', JSON.stringify(heroSave));
+                }
+              } catch (e) {}
               await syncUserToServer();
             }
             alert('🎉 VIP 결제가 최종 승인되었습니다! [자동 회피] 기능이 개방됩니다.');
