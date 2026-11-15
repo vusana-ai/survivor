@@ -83,20 +83,41 @@
       <div id="upgradeOptions" class="flex flex-col gap-2.5 w-full max-w-xs mt-2"></div>
     </div>
 
-    <!-- 로그인 모달 -->
-    <div id="loginModal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-5 z-50">
-      <div class="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-2xl p-5 text-center">
-        <h3 class="text-base font-black text-white mb-1">기존 계정 로그인 / 가입</h3>
-        <p class="text-[11px] text-slate-400 mb-4">용사 키우기 계정(번호 + 4자리 비번)이 그대로 연동됩니다.</p>
-        <div class="flex items-center gap-1.5 mb-2.5">
-          <span class="px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold text-slate-300">010</span>
-          <input id="phoneInput" type="tel" maxlength="8" placeholder="뒷자리 8자리 (예: 12345678)" class="flex-1 px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-rose-500" />
+    <!-- 용사 키우기 통일 디자인 로그인 모달 -->
+    <div id="loginModal" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-4 z-50">
+      <div class="w-full max-w-xs bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 shadow-2xl text-center">
+        <div class="w-12 h-12 mx-auto mb-2 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl">
+          🔐
         </div>
-        <input id="pinInput" type="password" maxlength="4" placeholder="비밀번호 4자리" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white mb-3 focus:outline-none focus:border-rose-500" />
-        <div id="loginMsg" class="text-[11px] text-rose-400 mb-2 hidden"></div>
-        <div class="flex gap-2">
-          <button id="closeLoginBtn" class="flex-1 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 cursor-pointer">취소</button>
-          <button id="confirmLoginBtn" class="flex-1 py-2 rounded-xl bg-rose-600 text-xs font-black text-white cursor-pointer">로그인</button>
+        <h3 class="text-lg font-black text-amber-300">Ksoft 통합 계정 로그인</h3>
+        <p class="text-[11px] text-slate-400 mt-1 mb-4">
+          용사 키우기 계정(휴대폰 번호 + 4자리 PIN)으로<br/>클라우드 저장 및 VIP 권한이 연동됩니다.
+        </p>
+
+        <div class="space-y-2.5 text-left">
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 ml-1">휴대폰 번호 (010 제외 8자리)</label>
+            <div class="flex items-center gap-1.5 mt-1">
+              <span class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-black text-amber-400">010</span>
+              <input id="phoneInput" type="tel" inputmode="numeric" maxlength="8" placeholder="12345678" class="flex-1 px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm font-bold text-white tracking-wider focus:outline-none focus:border-amber-400" />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 ml-1">비밀번호 (숫자 4자리)</label>
+            <input id="pinInput" type="password" inputmode="numeric" maxlength="4" placeholder="••••" class="w-full mt-1 px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm font-bold text-white tracking-widest text-center focus:outline-none focus:border-amber-400" />
+          </div>
+        </div>
+
+        <div id="loginMsg" class="text-[11px] font-bold text-rose-400 mt-3 hidden"></div>
+
+        <div class="flex gap-2 mt-4">
+          <button id="closeLoginBtn" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition cursor-pointer">
+            닫기
+          </button>
+          <button id="confirmLoginBtn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/20 transition active:scale-95 cursor-pointer">
+            로그인 / 가입
+          </button>
         </div>
       </div>
     </div>
@@ -112,7 +133,7 @@
           <li>🔫 <b>더블 샷(2연발)</b> 기본 장착 & 공격력 +30%</li>
           <li>💖 최대 체력 +50 및 황금 오라 이펙트</li>
         </ul>
-        <div id="vipStatusArea" class="mb-3">
+        <div id="vipStatusArea" class="mb-1">
           <div class="text-sm font-black text-amber-400 mb-2">결제 금액: 7,000원</div>
           <div class="flex gap-2">
             <button id="closeVipBtn" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 cursor-pointer">닫기</button>
@@ -125,10 +146,23 @@
     </div>
   </div>
 
-  <!-- 하단 안내 -->
-  <div class="w-full max-w-md bg-slate-900/60 border border-slate-800/80 rounded-xl py-1.5 px-3 text-center text-[11px] text-slate-400 z-20">
-    🎮 드래그 또는 방향키(WASD)로 이동 • VIP는 [자동회피] 지원
-  </div>
+  <!-- 하단 안드로이드 바로가기 아이콘 카드 (용사 키우기 동일 스타일 + inpock 링크 연결) -->
+  <section class="w-full max-w-md bg-gradient-to-br from-slate-900 to-amber-950/30 border border-amber-500/35 rounded-2xl p-3 shadow-xl z-20">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5 text-left">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-xl shrink-0">
+          📲
+        </div>
+        <div>
+          <div class="text-xs font-black text-amber-300">Ksoft 게임 모음 & 바로가기</div>
+          <p id="androidInstallHint" class="text-[10px] text-slate-400 mt-0.5">안드로이드 앱 아이콘 추가 및 전체 게임 보기</p>
+        </div>
+      </div>
+      <a href="https://link.inpock.co.kr/aigame" target="_blank" rel="noopener noreferrer" id="androidInstallBtn" class="px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl shadow-md transition active:scale-95 shrink-0 text-center">
+        아이콘 만들기
+      </a>
+    </div>
+  </section>
 
   <script>
     const API_BASE_URL = 'https://02826k.duckdns.org';
@@ -185,7 +219,7 @@
     let particles = [];
 
     // ==========================================
-    // 1. 엄격한 로그인 / 비밀번호 검증 로직
+    // 1. 로그인 / 비밀번호 검증 로직
     // ==========================================
     function applyVipUI() {
       if (userState.isVip) {
@@ -240,7 +274,7 @@
       const btn = document.getElementById('confirmLoginBtn');
 
       if (!/^\d{8}$/.test(tail)) {
-        msgEl.textContent = '휴대폰 뒷자리 8자리 숫자를 입력해주세요.';
+        msgEl.textContent = '휴대폰 뒷자리 8자리 숫자를 정확히 입력해주세요.';
         msgEl.classList.remove('hidden');
         return;
       }
@@ -256,14 +290,12 @@
       msgEl.classList.add('hidden');
 
       try {
-        // 기존 용사 키우기 서버의 /api/login 호출 (password와 pin 동시 전송해 호환)
         let res = await fetch(`${API_BASE_URL}/api/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone: fullPhone, pin, password: pin })
         });
 
-        // 만약 서버가 /api/auth만 열려있는 경우 보조 호출
         if (res.status === 404) {
           res = await fetch(`${API_BASE_URL}/api/auth`, {
             method: 'POST',
@@ -274,42 +306,37 @@
 
         const result = await res.json().catch(() => ({}));
 
-        // 서버에서 비밀번호 불일치 또는 인증 실패 응답 시 즉시 차단
         if (!res.ok || result.success === false || result.error) {
           msgEl.textContent = result.message || result.error || '❌ 비밀번호가 일치하지 않습니다!';
           msgEl.classList.remove('hidden');
           btn.disabled = false;
-          btn.textContent = '로그인';
+          btn.textContent = '로그인 / 가입';
           return;
         }
 
-        // 서버 인증을 정상 통과한 경우에만 로그인 승인
         userState.loggedIn = true;
         userState.phone = fullPhone;
         userState.pin = pin;
 
-        // 서버 DB에 저장된 VIP 여부 확인 (기존 용사 키우기 VIP 또는 좀비 서바이벌 VIP)
         const serverVip = Boolean(
           result.isVip ||
           (result.user && result.user.isVip) ||
           (result.data && result.data.isVip)
         );
 
-        // 관리자 번호는 서버 비밀번호 인증까지 통과했을 때만 VIP 부여
         userState.isVip = serverVip || (fullPhone === ADMIN_PHONE);
 
         document.getElementById('loginBtn').textContent = `👤 ${tail.slice(0, 4)}****`;
         document.getElementById('loginModal').classList.add('hidden');
         applyVipUI();
       } catch (err) {
-        // 서버 자체가 꺼져있는 경우 로컬에 저장된 기존 비밀번호와 대조
         const localAccounts = JSON.parse(localStorage.getItem('ksoft_local_accounts') || '{}');
         if (localAccounts[fullPhone]) {
           if (localAccounts[fullPhone].pin !== pin) {
             msgEl.textContent = '❌ 비밀번호가 일치하지 않습니다!';
             msgEl.classList.remove('hidden');
             btn.disabled = false;
-            btn.textContent = '로그인';
+            btn.textContent = '로그인 / 가입';
             return;
           }
           userState.loggedIn = true;
@@ -317,7 +344,6 @@
           userState.pin = pin;
           userState.isVip = Boolean(localAccounts[fullPhone].isVip);
         } else {
-          // 최초 오프라인 가입 시에도 VIP는 기본 false (결제해야만 true)
           localAccounts[fullPhone] = { pin, isVip: false };
           localStorage.setItem('ksoft_local_accounts', JSON.stringify(localAccounts));
           userState.loggedIn = true;
@@ -331,7 +357,7 @@
         applyVipUI();
       } finally {
         btn.disabled = false;
-        btn.textContent = '로그인';
+        btn.textContent = '로그인 / 가입';
       }
     };
 
@@ -355,7 +381,6 @@
         const payment = tossPayments.payment({ customerKey: `USER_${userState.phone}` });
         const orderId = `ZVIP_${userState.phone}_${Date.now()}`;
 
-        // 결제 복귀 시 계정 유지를 위해 임시 저장
         sessionStorage.setItem('pending_vip_user', JSON.stringify({
           phone: userState.phone,
           pin: userState.pin
@@ -374,3 +399,544 @@
         alert('결제창 호출 중 오류가 발생했습니다: ' + (err.message || err));
       }
     };
+
+    async function handlePaymentRedirect() {
+      const params = new URLSearchParams(window.location.search);
+      const paymentKey = params.get('paymentKey');
+      const orderId = params.get('orderId');
+      const amount = params.get('amount');
+
+      if (paymentKey && orderId && Number(amount) === 7000) {
+        const pendingUser = JSON.parse(sessionStorage.getItem('pending_vip_user') || 'null');
+        if (pendingUser && pendingUser.phone) {
+          userState.loggedIn = true;
+          userState.phone = pendingUser.phone;
+          userState.pin = pendingUser.pin;
+          document.getElementById('loginBtn').textContent = `👤 ${pendingUser.phone.slice(3, 7)}****`;
+        }
+
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/payments/confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              paymentKey,
+              orderId,
+              amount: Number(amount),
+              phone: userState.phone
+            })
+          });
+          const confirmData = await res.json().catch(() => ({}));
+
+          if (res.ok && confirmData.success !== false) {
+            userState.isVip = true;
+            if (userState.phone) {
+              const localAccounts = JSON.parse(localStorage.getItem('ksoft_local_accounts') || '{}');
+              if (localAccounts[userState.phone]) {
+                localAccounts[userState.phone].isVip = true;
+                localStorage.setItem('ksoft_local_accounts', JSON.stringify(localAccounts));
+              }
+              await syncUserToServer();
+            }
+            alert('🎉 VIP 결제가 최종 승인되었습니다! [자동 회피] 기능이 개방됩니다.');
+          } else {
+            alert('❌ 결제 승인 검증에 실패했습니다: ' + (confirmData.message || '서버 확인 필요'));
+          }
+        } catch (e) {
+          alert('❌ 결제 승인 서버와 연결할 수 없어 VIP가 적용되지 않았습니다.');
+        }
+
+        sessionStorage.removeItem('pending_vip_user');
+        applyVipUI();
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (params.get('payFail')) {
+        alert('결제가 취소되었거나 실패했습니다.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    const autoDodgeBtn = document.getElementById('autoDodgeBtn');
+    autoDodgeBtn.onclick = () => {
+      if (!userState.isVip) return;
+      userState.autoDodge = !userState.autoDodge;
+      if (userState.autoDodge) {
+        autoDodgeBtn.textContent = '🛡️ 자동회피: ON';
+        autoDodgeBtn.className = 'px-2 py-1 rounded-lg bg-emerald-600 border border-emerald-400 text-white text-[11px] font-black shadow transition cursor-pointer';
+      } else {
+        autoDodgeBtn.textContent = '🛡️ 자동회피: OFF';
+        autoDodgeBtn.className = 'px-2 py-1 rounded-lg bg-slate-800 border border-slate-600 text-slate-400 text-[11px] font-bold transition cursor-pointer';
+      }
+    };
+
+    // ==========================================
+    // 3. 조작 및 게임 루프
+    // ==========================================
+    let touchControl = { active: false, startX: 0, startY: 0, moveX: 0, moveY: 0 };
+    canvas.addEventListener('pointerdown', (e) => {
+      if (gameState !== 'PLAY') return;
+      touchControl.active = true;
+      touchControl.startX = e.clientX;
+      touchControl.startY = e.clientY;
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!touchControl.active || gameState !== 'PLAY') return;
+      const dx = e.clientX - touchControl.startX;
+      const dy = e.clientY - touchControl.startY;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 0) {
+        touchControl.moveX = (dx / Math.max(dist, 40)) * player.speed;
+        touchControl.moveY = (dy / Math.max(dist, 40)) * player.speed;
+      }
+    });
+    const resetTouch = () => { touchControl.active = false; touchControl.moveX = 0; touchControl.moveY = 0; };
+    canvas.addEventListener('pointerup', resetTouch);
+    canvas.addEventListener('pointercancel', resetTouch);
+
+    let keys = {};
+    window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    function updateStageUI() {
+      document.getElementById('stageVal').textContent = stage;
+      document.getElementById('stageGoalVal').textContent = bossSpawned
+        ? '🔥 보스 처치!'
+        : `처치: ${stageKills} / ${stageTargetKills}`;
+      document.getElementById('expBar').style.width = `${Math.min(100, (player.exp / player.maxExp) * 100)}%`;
+    }
+
+    function startGame() {
+      gameState = 'PLAY';
+      score = 0;
+      stage = 1;
+      stageKills = 0;
+      stageTargetKills = 15;
+      bossSpawned = false;
+
+      zombies = [];
+      bullets = [];
+      gems = [];
+      particles = [];
+
+      player.x = canvas.width / 2;
+      player.y = canvas.height / 2;
+      player.level = 1;
+      player.exp = 0;
+      player.maxExp = 30;
+      player.maxHp = userState.isVip ? 150 : 100;
+      player.hp = player.maxHp;
+      player.damage = userState.isVip ? 24 : 18;
+      player.multiShot = userState.isVip ? 2 : 1;
+      player.attackSpeed = 16;
+
+      document.getElementById('scoreVal').textContent = '0';
+      document.getElementById('levelVal').textContent = '1';
+      document.getElementById('overlay').classList.add('hidden');
+      document.getElementById('bossAlert').classList.add('hidden');
+      updateStageUI();
+
+      startSpawner();
+    }
+
+    function startSpawner() {
+      if (spawnTimer) clearInterval(spawnTimer);
+      spawnTimer = setInterval(() => {
+        if (gameState === 'PLAY' && !bossSpawned) {
+          spawnZombie(false);
+        }
+      }, Math.max(350, 1050 - stage * 110));
+    }
+
+    function spawnZombie(isBoss) {
+      const edge = Math.floor(Math.random() * 4);
+      let x, y;
+      if (edge === 0) { x = Math.random() * canvas.width; y = -25; }
+      else if (edge === 1) { x = Math.random() * canvas.width; y = canvas.height + 25; }
+      else if (edge === 2) { x = -25; y = Math.random() * canvas.height; }
+      else { x = canvas.width + 25; y = Math.random() * canvas.height; }
+
+      if (isBoss) {
+        bossSpawned = true;
+        const alertEl = document.getElementById('bossAlert');
+        alertEl.classList.remove('hidden');
+        setTimeout(() => alertEl.classList.add('hidden'), 3000);
+        updateStageUI();
+
+        zombies.push({
+          x, y,
+          radius: 30,
+          speed: 1.1 + stage * 0.1,
+          hp: 280 + stage * 180,
+          maxHp: 280 + stage * 180,
+          isBoss: true,
+          expVal: 50
+        });
+      } else {
+        const isRunner = Math.random() < 0.25;
+        zombies.push({
+          x, y,
+          radius: isRunner ? 11 : 14,
+          speed: isRunner ? 2.3 + stage * 0.1 : 1.5 + stage * 0.08,
+          hp: 20 + stage * 12,
+          maxHp: 20 + stage * 12,
+          isBoss: false,
+          isRunner,
+          expVal: 6
+        });
+      }
+    }
+
+    function nextStage() {
+      gameState = 'STAGE_CLEAR';
+      syncUserToServer();
+      const clearBanner = document.getElementById('stageClearAlert');
+      document.getElementById('nextStageText').textContent = `STAGE ${stage + 1} 구역으로 진입합니다!`;
+      clearBanner.classList.remove('hidden');
+
+      setTimeout(() => {
+        clearBanner.classList.add('hidden');
+        stage++;
+        stageKills = 0;
+        stageTargetKills = 15 + stage * 5;
+        bossSpawned = false;
+        zombies = [];
+        player.hp = Math.min(player.maxHp, player.hp + 30);
+        updateStageUI();
+        gameState = 'PLAY';
+        startSpawner();
+      }, 1800);
+    }
+
+    function getAutoDodgeVelocity() {
+      let evadeX = 0;
+      let evadeY = 0;
+      const dangerRadius = 115;
+
+      zombies.forEach(z => {
+        const dx = player.x - z.x;
+        const dy = player.y - z.y;
+        const dist = Math.hypot(dx, dy);
+        const safeDist = dangerRadius + z.radius;
+        if (dist > 0 && dist < safeDist) {
+          const weight = Math.pow((safeDist - dist) / safeDist, 1.6) * (z.isBoss ? 2.5 : 1.2);
+          evadeX += (dx / dist) * weight;
+          evadeY += (dy / dist) * weight;
+        }
+      });
+
+      const margin = 55;
+      if (player.x < margin) evadeX += (margin - player.x) / margin;
+      if (player.x > canvas.width - margin) evadeX -= (player.x - (canvas.width - margin)) / margin;
+      if (player.y < margin) evadeY += (margin - player.y) / margin;
+      if (player.y > canvas.height - margin) evadeY -= (player.y - (canvas.height - margin)) / margin;
+
+      const mag = Math.hypot(evadeX, evadeY);
+      if (mag > 0.05) {
+        return {
+          vx: (evadeX / mag) * player.speed * 0.95,
+          vy: (evadeY / mag) * player.speed * 0.95
+        };
+      }
+      return { vx: 0, vy: 0 };
+    }
+
+    function update() {
+      if (gameState !== 'PLAY') return;
+
+      let vx = touchControl.moveX;
+      let vy = touchControl.moveY;
+      if (keys['arrowleft'] || keys['a']) vx = -player.speed;
+      if (keys['arrowright'] || keys['d']) vx = player.speed;
+      if (keys['arrowup'] || keys['w']) vy = -player.speed;
+      if (keys['arrowdown'] || keys['s']) vy = player.speed;
+
+      if (vx === 0 && vy === 0 && userState.isVip && userState.autoDodge) {
+        const dodge = getAutoDodgeVelocity();
+        vx = dodge.vx;
+        vy = dodge.vy;
+      }
+
+      player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x + vx));
+      player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y + vy));
+
+      player.attackCooldown--;
+      let nearest = null;
+      let minDist = player.range;
+      zombies.forEach(z => {
+        let dist = Math.hypot(z.x - player.x, z.y - player.y);
+        if (dist < minDist) { minDist = dist; nearest = z; }
+      });
+
+      if (nearest) {
+        player.facingAngle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+        if (player.attackCooldown <= 0) {
+          for (let i = 0; i < player.multiShot; i++) {
+            let spread = (i - (player.multiShot - 1) / 2) * 0.14;
+            let angle = player.facingAngle + spread;
+            bullets.push({
+              x: player.x + Math.cos(angle) * 18,
+              y: player.y + Math.sin(angle) * 18,
+              vx: Math.cos(angle) * 8.5,
+              vy: Math.sin(angle) * 8.5,
+              damage: player.damage,
+              radius: 4
+            });
+          }
+          player.attackCooldown = player.attackSpeed;
+        }
+      } else if (vx !== 0 || vy !== 0) {
+        player.facingAngle = Math.atan2(vy, vx);
+      }
+
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        b.x += b.vx;
+        b.y += b.vy;
+        if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+          bullets.splice(i, 1);
+        }
+      }
+
+      for (let zIdx = zombies.length - 1; zIdx >= 0; zIdx--) {
+        let z = zombies[zIdx];
+        let angle = Math.atan2(player.y - z.y, player.x - z.x);
+        z.x += Math.cos(angle) * z.speed;
+        z.y += Math.sin(angle) * z.speed;
+
+        if (Math.hypot(player.x - z.x, player.y - z.y) < player.radius + z.radius) {
+          player.hp -= z.isBoss ? 1.2 : 0.55;
+          if (player.hp <= 0) {
+            gameOver();
+            return;
+          }
+        }
+
+        for (let bIdx = bullets.length - 1; bIdx >= 0; bIdx--) {
+          let b = bullets[bIdx];
+          if (Math.hypot(b.x - z.x, b.y - z.y) < b.radius + z.radius) {
+            z.hp -= b.damage;
+            bullets.splice(bIdx, 1);
+
+            for (let p = 0; p < 3; p++) {
+              particles.push({
+                x: z.x, y: z.y,
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                life: 12,
+                color: '#84cc16'
+              });
+            }
+
+            if (z.hp <= 0) {
+              score += z.isBoss ? 500 : 15;
+              document.getElementById('scoreVal').textContent = score;
+              gems.push({ x: z.x, y: z.y, val: z.expVal, radius: z.isBoss ? 10 : 6 });
+              zombies.splice(zIdx, 1);
+
+              if (z.isBoss) {
+                nextStage();
+                return;
+              } else {
+                stageKills++;
+                if (stageKills >= stageTargetKills && !bossSpawned) {
+                  spawnZombie(true);
+                }
+                updateStageUI();
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      for (let gIdx = gems.length - 1; gIdx >= 0; gIdx--) {
+        let g = gems[gIdx];
+        let dist = Math.hypot(player.x - g.x, player.y - g.y);
+        if (dist < 85) {
+          let angle = Math.atan2(player.y - g.y, player.x - g.x);
+          g.x += Math.cos(angle) * 5.5;
+          g.y += Math.sin(angle) * 5.5;
+        }
+        if (dist < player.radius + g.radius) {
+          player.exp += g.val;
+          gems.splice(gIdx, 1);
+          updateStageUI();
+          if (player.exp >= player.maxExp) levelUp();
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].x += particles[i].vx;
+        particles[i].y += particles[i].vy;
+        particles[i].life--;
+        if (particles[i].life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function levelUp() {
+      player.level++;
+      player.exp = 0;
+      player.maxExp = Math.floor(player.maxExp * 1.35);
+      document.getElementById('levelVal').textContent = player.level;
+      updateStageUI();
+
+      gameState = 'UPGRADE';
+      const modal = document.getElementById('upgradeModal');
+      const container = document.getElementById('upgradeOptions');
+      container.innerHTML = '';
+
+      const options = [
+        { title: '🔥 탄환 화력 강화 (+10)', desc: '총알의 기본 데미지가 상승합니다.', action: () => { player.damage += 10; } },
+        { title: '🔫 멀티 샷 (+1발)', desc: '동시에 발사되는 총알 수가 늘어납니다.', action: () => { player.multiShot = Math.min(5, player.multiShot + 1); } },
+        { title: '⚡ 속사 개조', desc: '연사 속도가 대폭 빨라집니다.', action: () => { player.attackSpeed = Math.max(5, player.attackSpeed - 3); } },
+        { title: '💖 응급 치료 키트', desc: '체력을 100% 회복하고 최대 체력이 증가합니다.', action: () => { player.maxHp += 30; player.hp = player.maxHp; } }
+      ];
+
+      options.sort(() => 0.5 - Math.random()).slice(0, 3).forEach(opt => {
+        let btn = document.createElement('button');
+        btn.className = 'w-full p-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-left transition cursor-pointer';
+        btn.innerHTML = `<div class="text-xs font-black text-amber-300">${opt.title}</div><div class="text-[10px] text-slate-400 mt-0.5">${opt.desc}</div>`;
+        btn.onclick = () => {
+          opt.action();
+          modal.classList.add('hidden');
+          gameState = 'PLAY';
+        };
+        container.appendChild(btn);
+      });
+      modal.classList.remove('hidden');
+    }
+
+    function gameOver() {
+      gameState = 'GAMEOVER';
+      clearInterval(spawnTimer);
+      syncUserToServer();
+      document.getElementById('overlayTitle').textContent = "생존 실패!";
+      document.getElementById('overlayDesc').textContent = `도달 스테이지: STAGE ${stage} | 최종 점수: ${score}점`;
+      document.getElementById('startBtn').textContent = "다시 도전하기";
+      document.getElementById('overlay').classList.remove('hidden');
+    }
+
+    function drawFemaleCharacter(x, y, angle) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (userState.isVip) {
+        ctx.strokeStyle = userState.autoDodge ? 'rgba(52, 211, 153, 0.55)' : 'rgba(250, 204, 21, 0.45)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 23, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.rotate(angle);
+
+      ctx.fillStyle = '#f43f5e';
+      ctx.beginPath();
+      ctx.ellipse(-13, 0, 8, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(6, 3, 18, 4);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(4, 2, 8, 6);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(0, 0, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fde68a';
+      ctx.beginPath();
+      ctx.arc(2, 0, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#e11d48';
+      ctx.beginPath();
+      ctx.arc(0, 0, 8.5, Math.PI * 0.65, Math.PI * 1.35);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawZombie(z) {
+      ctx.save();
+      ctx.translate(z.x, z.y);
+      let angle = Math.atan2(player.y - z.y, player.x - z.x);
+      ctx.rotate(angle);
+
+      ctx.fillStyle = z.isBoss ? '#7f1d1d' : '#4d7c0f';
+      ctx.fillRect(2, -z.radius * 0.85, z.radius * 1.1, 4);
+      ctx.fillRect(2, z.radius * 0.85 - 4, z.radius * 1.1, 4);
+
+      ctx.fillStyle = z.isBoss ? '#991b1b' : (z.isRunner ? '#65a30d' : '#3f6212');
+      ctx.beginPath();
+      ctx.arc(0, 0, z.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(z.radius * 0.45, -z.radius * 0.3, z.isBoss ? 3.5 : 2, 0, Math.PI * 2);
+      ctx.arc(z.radius * 0.45, z.radius * 0.3, z.isBoss ? 3.5 : 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      const barW = z.isBoss ? 54 : 24;
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(z.x - barW / 2, z.y - z.radius - 9, barW, 4);
+      ctx.fillStyle = z.isBoss ? '#f43f5e' : '#22c55e';
+      ctx.fillRect(z.x - barW / 2, z.y - z.radius - 9, barW * Math.max(0, z.hp / z.maxHp), 4);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = 'rgba(30, 41, 59, 0.45)';
+      ctx.lineWidth = 1;
+      for (let gx = 0; gx < canvas.width; gx += 40) {
+        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, canvas.height); ctx.stroke();
+      }
+      for (let gy = 0; gy < canvas.height; gy += 40) {
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(canvas.width, gy); ctx.stroke();
+      }
+
+      gems.forEach(g => {
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(g.x, g.y, g.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = '#facc15';
+      bullets.forEach(b => {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      zombies.forEach(z => drawZombie(z));
+
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 3, 3);
+      });
+
+      drawFemaleCharacter(player.x, player.y, player.facingAngle);
+
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(player.x - 18, player.y - 24, 36, 5);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(player.x - 18, player.y - 24, 36 * Math.max(0, player.hp / player.maxHp), 5);
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    handlePaymentRedirect();
+    loop();
+  </script>
+</body>
+</html>
