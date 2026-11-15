@@ -179,12 +179,11 @@
     <div class="flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5 text-left min-w-0">
         <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-xl shrink-0 overflow-hidden">
-          <img src="./icon.png" alt="AI게임장" class="w-full h-full object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';" />
+          <img src="./icon.png" alt="AI게임장" class="w-full h-full object-cover" onerror="if(!this.dataset.triedJpg){this.dataset.triedJpg='1';this.src='./icon.jpg';}else{this.style.display='none';this.nextElementSibling.style.display='inline';}" />
           <span style="display:none">📲</span>
         </div>
         <div class="min-w-0">
           <div class="text-xs font-black text-amber-300 truncate">AI게임장 바로가기</div>
-          <p id="androidInstallHint" class="text-[10px] text-slate-400 mt-0.5 truncate">버튼을 누르면 바탕화면에 AI게임장 아이콘이 설치됩니다.</p>
         </div>
       </div>
       <button type="button" id="androidInstallBtn" class="px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl shadow-md transition active:scale-95 shrink-0 text-center cursor-pointer">
@@ -1137,7 +1136,6 @@
     let deferredInstallPrompt = null;
     const androidInstallBtn = document.getElementById('androidInstallBtn');
     const androidInstallBtnText = document.getElementById('androidInstallBtnText');
-    const androidInstallHint = document.getElementById('androidInstallHint');
 
     if (window.matchMedia('(display-mode: standalone)').matches) {
       androidInstallBtnText.textContent = '바탕화면 아이콘 설치 완료됨';
@@ -1149,14 +1147,11 @@
       e.preventDefault();
       deferredInstallPrompt = e;
       androidInstallBtnText.textContent = '아이콘 만들기 (설치 가능)';
-      androidInstallHint.textContent = '준비 완료! 누르면 바탕화면 아이콘 설치 창이 뜹니다.';
-      androidInstallHint.className = 'text-[10px] text-emerald-400 font-semibold mt-0.5 truncate';
     });
 
     window.addEventListener('appinstalled', () => {
       deferredInstallPrompt = null;
       androidInstallBtnText.textContent = '아이콘 설치 완료!';
-      androidInstallHint.textContent = '바탕화면에 AI게임장 아이콘이 생성되었습니다.';
     });
 
     androidInstallBtn.addEventListener('click', async () => {
