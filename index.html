@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>좀비 서바이벌 — Ksoft 액션</title>
+  <title>좀비 서바이벌 — AI게임장</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://js.tosspayments.com/v2/standard"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; overflow: hidden; background: #020617; }
+    body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; overflow: hidden; background: #020617; height: 100vh; height: 100dvh; }
     canvas { touch-action: none; }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body class="text-slate-100 h-screen flex flex-col items-center justify-between p-2 select-none">
@@ -51,7 +52,7 @@
   </header>
 
   <!-- 게임 캔버스 아레나 -->
-  <div class="relative w-full max-w-md flex-1 my-1.5 bg-slate-950 border-2 border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center">
+  <div class="relative w-full max-w-md flex-1 min-h-0 my-1.5 bg-slate-950 border-2 border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center">
     <canvas id="gameCanvas" class="w-full h-full block"></canvas>
 
     <!-- 보스 경고 배너 -->
@@ -83,23 +84,32 @@
       <div id="upgradeOptions" class="flex flex-col gap-2.5 w-full max-w-xs mt-2"></div>
     </div>
 
-    <!-- 용사 키우기 통일 디자인 로그인 모달 -->
+    <!-- 용사 키우기 동일 DB 연동 로그인 / 회원가입 모달 -->
     <div id="loginModal" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-4 z-50">
       <div class="w-full max-w-xs bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 shadow-2xl text-center">
         <div class="w-12 h-12 mx-auto mb-2 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-2xl">
           🔐
         </div>
-        <h3 class="text-lg font-black text-amber-300">Ksoft 통합 계정 로그인</h3>
-        <p class="text-[11px] text-slate-400 mt-1 mb-4">
-          용사 키우기 계정(휴대폰 번호 + 4자리 PIN)으로<br/>클라우드 저장 및 VIP 권한이 연동됩니다.
+        <h3 class="text-lg font-black text-amber-300">AI게임장 통합 계정</h3>
+        <p class="text-[11px] text-slate-400 mt-1 mb-3">
+          용사 키우기 계정(010 번호 + 4자리 PIN)과<br/>동일한 DB로 VIP 및 기록이 연동됩니다.
         </p>
+
+        <div class="flex rounded-xl bg-slate-950 p-1 border border-slate-800 mb-3">
+          <button type="button" id="modeLoginBtn" class="flex-1 py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-slate-950 transition cursor-pointer">
+            기존 계정 로그인
+          </button>
+          <button type="button" id="modeRegisterBtn" class="flex-1 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-slate-200 transition cursor-pointer">
+            간편 회원가입
+          </button>
+        </div>
 
         <div class="space-y-2.5 text-left">
           <div>
             <label class="text-[10px] font-bold text-slate-400 ml-1">휴대폰 번호 (010 제외 8자리)</label>
             <div class="flex items-center gap-1.5 mt-1">
-              <span class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-black text-amber-400">010</span>
-              <input id="phoneInput" type="tel" inputmode="numeric" maxlength="8" placeholder="12345678" class="flex-1 px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm font-bold text-white tracking-wider focus:outline-none focus:border-amber-400" />
+              <span class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-black text-amber-400">010-</span>
+              <input id="phoneInput" type="tel" inputmode="numeric" maxlength="9" placeholder="1234-5678" class="flex-1 px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm font-bold text-white tracking-wider focus:outline-none focus:border-amber-400" />
             </div>
           </div>
 
@@ -112,11 +122,28 @@
         <div id="loginMsg" class="text-[11px] font-bold text-rose-400 mt-3 hidden"></div>
 
         <div class="flex gap-2 mt-4">
-          <button id="closeLoginBtn" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition cursor-pointer">
+          <button type="button" id="closeLoginBtn" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition cursor-pointer">
             닫기
           </button>
-          <button id="confirmLoginBtn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/20 transition active:scale-95 cursor-pointer">
-            로그인 / 가입
+          <button type="button" id="confirmLoginBtn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/20 transition active:scale-95 cursor-pointer">
+            로그인
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI게임장 바로가기 안내 모달 -->
+    <div id="shortcutModal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-5 z-50">
+      <div class="w-full max-w-xs bg-slate-900 border border-amber-500/50 rounded-2xl p-5 text-center shadow-2xl">
+        <div class="text-2xl mb-1">📲</div>
+        <h3 class="text-base font-black text-amber-300 mb-1">AI게임장 바로가기</h3>
+        <p id="shortcutGuideText" class="text-[11px] text-slate-300 leading-relaxed mb-4"></p>
+        <div class="flex flex-col gap-2">
+          <a href="https://link.inpock.co.kr/aigame" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-xs font-black text-slate-950 shadow-lg text-center">
+            🎮 AI게임장 열기
+          </a>
+          <button type="button" id="closeShortcutBtn" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 cursor-pointer">
+            닫기
           </button>
         </div>
       </div>
@@ -154,37 +181,60 @@
           📲
         </div>
         <div>
-          <div class="text-xs font-black text-amber-300">Ksoft 게임 모음 & 바로가기</div>
+          <div class="text-xs font-black text-amber-300">AI게임장 바로가기</div>
           <p id="androidInstallHint" class="text-[10px] text-slate-400 mt-0.5">안드로이드 앱 아이콘 추가 및 전체 게임 보기</p>
         </div>
       </div>
-      <a href="https://link.inpock.co.kr/aigame" target="_blank" rel="noopener noreferrer" id="androidInstallBtn" class="px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl shadow-md transition active:scale-95 shrink-0 text-center">
+      <button type="button" id="androidInstallBtn" class="px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl shadow-md transition active:scale-95 shrink-0 text-center cursor-pointer">
         아이콘 만들기
-      </a>
+      </button>
     </div>
   </section>
 
   <script>
-    const API_BASE_URL = 'https://02826k.duckdns.org';
+    const TUNNEL_URL = 'https://partial-catering-vatican-accounting.trycloudflare.com';
+    const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_BASE_URL = isLocalHost ? '' : TUNNEL_URL;
     const TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
-    const ADMIN_PHONE = '01094850928';
+    const ADMIN_VIP_PHONES = ['010-9485-0928'];
+    const TOKEN_KEY = 'hero_clicker_jwt_token';
+    const USER_KEY = 'hero_clicker_username';
 
     let userState = {
       loggedIn: false,
       phone: '',
       pin: '',
+      token: localStorage.getItem(TOKEN_KEY) || null,
+      username: localStorage.getItem(USER_KEY) || null,
       isVip: false,
-      autoDodge: true
+      autoDodge: true,
+      serverSaveData: null
     };
+    let isRegisterMode = false;
+
+    function isAdminAccount(username) {
+      return Boolean(username && ADMIN_VIP_PHONES.includes(username.trim()));
+    }
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
     function resizeCanvas() {
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = canvas.parentElement.clientHeight;
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const w = parent.clientWidth;
+      const h = parent.clientHeight;
+      if (w > 0 && h > 0) {
+        canvas.width = w;
+        canvas.height = h;
+      }
     }
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('DOMContentLoaded', resizeCanvas);
+    window.addEventListener('load', resizeCanvas);
+    if (typeof ResizeObserver !== 'undefined' && canvas.parentElement) {
+      new ResizeObserver(() => resizeCanvas()).observe(canvas.parentElement);
+    }
     resizeCanvas();
 
     let gameState = 'STOP';
@@ -219,7 +269,7 @@
     let particles = [];
 
     // ==========================================
-    // 1. 로그인 / 비밀번호 검증 로직
+    // 1. 용사 키우기 통합 DB 로그인 / 저장 로직
     // ==========================================
     function applyVipUI() {
       if (userState.isVip) {
@@ -241,39 +291,122 @@
       }
     }
 
+    function updateLoginButtonUI() {
+      const loginBtn = document.getElementById('loginBtn');
+      if (userState.loggedIn && userState.username) {
+        const parts = userState.username.split('-');
+        const shortLabel = parts.length === 3 ? `${parts[1]}-****` : userState.username;
+        loginBtn.textContent = `👤 ${shortLabel}`;
+      } else {
+        loginBtn.textContent = '👤 로그인';
+      }
+    }
+
     async function syncUserToServer() {
-      if (!userState.loggedIn) return;
+      if (!userState.loggedIn || !userState.token) return;
       try {
-        await fetch(`${API_BASE_URL}/api/save`, {
+        const baseSave = (userState.serverSaveData && typeof userState.serverSaveData === 'object')
+          ? { ...userState.serverSaveData }
+          : {};
+        baseSave.isVip = Boolean(baseSave.isVip || userState.isVip);
+        baseSave.zombieSurvival = {
+          score: Math.max(score, Number(baseSave.zombieSurvival?.score || 0)),
+          stage: Math.max(stage, Number(baseSave.zombieSurvival?.stage || 1)),
+          updatedAt: new Date().toISOString()
+        };
+        userState.serverSaveData = baseSave;
+
+        const res = await fetch(`${API_BASE_URL}/api/save`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            phone: userState.phone,
-            pin: userState.pin,
-            password: userState.pin,
-            game: 'zombie_survival',
-            isVip: userState.isVip,
-            data: { isVip: userState.isVip, score, stage }
-          })
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userState.token}`
+          },
+          body: JSON.stringify({ saveData: baseSave })
         });
+        if (res.status === 401 || res.status === 403) {
+          userState.loggedIn = false;
+          userState.token = null;
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+          updateLoginButtonUI();
+        }
       } catch (e) {
         console.warn('서버 저장 통신 지연:', e);
       }
     }
 
-    document.getElementById('loginBtn').onclick = () => {
+    async function restoreSessionFromToken() {
+      if (!userState.token || !userState.username) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/load`, {
+          headers: { 'Authorization': `Bearer ${userState.token}` }
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            userState.token = null;
+            userState.username = null;
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+          }
+          return;
+        }
+        const data = await res.json();
+        userState.loggedIn = true;
+        userState.phone = userState.username.replace(/\D/g, '');
+        userState.serverSaveData = data.saveData || {};
+        userState.isVip = Boolean(userState.serverSaveData.isVip || isAdminAccount(userState.username));
+        updateLoginButtonUI();
+        applyVipUI();
+      } catch (e) {
+        console.warn('세션 복원 대기:', e);
+      }
+    }
+
+    const phoneInputEl = document.getElementById('phoneInput');
+    const pinInputEl = document.getElementById('pinInput');
+    const modeLoginBtn = document.getElementById('modeLoginBtn');
+    const modeRegisterBtn = document.getElementById('modeRegisterBtn');
+    const confirmLoginBtn = document.getElementById('confirmLoginBtn');
+
+    function setAuthMode(register) {
+      isRegisterMode = register;
       document.getElementById('loginMsg').classList.add('hidden');
+      if (register) {
+        modeRegisterBtn.className = 'flex-1 py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-slate-950 transition cursor-pointer';
+        modeLoginBtn.className = 'flex-1 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-slate-200 transition cursor-pointer';
+        confirmLoginBtn.textContent = '회원가입';
+      } else {
+        modeLoginBtn.className = 'flex-1 py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-slate-950 transition cursor-pointer';
+        modeRegisterBtn.className = 'flex-1 py-1.5 rounded-lg text-xs font-extrabold text-slate-400 hover:text-slate-200 transition cursor-pointer';
+        confirmLoginBtn.textContent = '로그인';
+      }
+    }
+
+    modeLoginBtn.onclick = () => setAuthMode(false);
+    modeRegisterBtn.onclick = () => setAuthMode(true);
+
+    phoneInputEl.addEventListener('input', (e) => {
+      const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
+      e.target.value = digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits;
+    });
+    pinInputEl.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    document.getElementById('loginBtn').onclick = () => {
+      setAuthMode(false);
       document.getElementById('loginModal').classList.remove('hidden');
+      setTimeout(() => phoneInputEl.focus(), 50);
     };
     document.getElementById('closeLoginBtn').onclick = () => document.getElementById('loginModal').classList.add('hidden');
 
-    document.getElementById('confirmLoginBtn').onclick = async () => {
-      const tail = document.getElementById('phoneInput').value.trim();
-      const pin = document.getElementById('pinInput').value.trim();
+    confirmLoginBtn.onclick = async () => {
+      const rawDigits = phoneInputEl.value.replace(/\D/g, '');
+      const pin = pinInputEl.value.trim();
       const msgEl = document.getElementById('loginMsg');
-      const btn = document.getElementById('confirmLoginBtn');
 
-      if (!/^\d{8}$/.test(tail)) {
+      if (rawDigits.length !== 8) {
         msgEl.textContent = '휴대폰 뒷자리 8자리 숫자를 정확히 입력해주세요.';
         msgEl.classList.remove('hidden');
         return;
@@ -284,80 +417,73 @@
         return;
       }
 
-      const fullPhone = '010' + tail;
-      btn.disabled = true;
-      btn.textContent = '확인 중...';
+      const fullPhoneId = `010-${rawDigits.slice(0, 4)}-${rawDigits.slice(4)}`;
+      const endpoint = isRegisterMode ? '/api/register' : '/api/login';
+
+      confirmLoginBtn.disabled = true;
+      confirmLoginBtn.textContent = '확인 중...';
       msgEl.classList.add('hidden');
 
+      const initialSave = {
+        power: 1,
+        gold: 0,
+        honorLevel: 0,
+        totalClicks: 0,
+        ownedWeapons: ['wooden_sword'],
+        equippedWeaponId: 'wooden_sword',
+        currentRegionId: 'village',
+        soundEnabled: true,
+        bgmEnabled: true,
+        isVip: isAdminAccount(fullPhoneId),
+        autoClickEnabled: false,
+        zombieSurvival: { score, stage }
+      };
+
+      const payload = isRegisterMode
+        ? { username: fullPhoneId, password: pin, initialSaveData: initialSave }
+        : { username: fullPhoneId, password: pin };
+
       try {
-        let res = await fetch(`${API_BASE_URL}/api/login`, {
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: fullPhone, pin, password: pin })
+          body: JSON.stringify(payload)
         });
-
-        if (res.status === 404) {
-          res = await fetch(`${API_BASE_URL}/api/auth`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: fullPhone, pin, password: pin })
-          });
-        }
-
         const result = await res.json().catch(() => ({}));
 
-        if (!res.ok || result.success === false || result.error) {
-          msgEl.textContent = result.message || result.error || '❌ 비밀번호가 일치하지 않습니다!';
+        if (!res.ok) {
+          msgEl.textContent = result.error || result.message || '로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.';
           msgEl.classList.remove('hidden');
-          btn.disabled = false;
-          btn.textContent = '로그인 / 가입';
           return;
         }
 
         userState.loggedIn = true;
-        userState.phone = fullPhone;
+        userState.token = result.token;
+        userState.username = result.username || fullPhoneId;
+        userState.phone = '010' + rawDigits;
         userState.pin = pin;
-
-        const serverVip = Boolean(
-          result.isVip ||
-          (result.user && result.user.isVip) ||
-          (result.data && result.data.isVip)
+        userState.serverSaveData = result.saveData || initialSave;
+        userState.isVip = Boolean(
+          userState.serverSaveData.isVip || isAdminAccount(userState.username)
         );
 
-        userState.isVip = serverVip || (fullPhone === ADMIN_PHONE);
+        localStorage.setItem(TOKEN_KEY, userState.token);
+        localStorage.setItem(USER_KEY, userState.username);
 
-        document.getElementById('loginBtn').textContent = `👤 ${tail.slice(0, 4)}****`;
-        document.getElementById('loginModal').classList.add('hidden');
-        applyVipUI();
-      } catch (err) {
-        const localAccounts = JSON.parse(localStorage.getItem('ksoft_local_accounts') || '{}');
-        if (localAccounts[fullPhone]) {
-          if (localAccounts[fullPhone].pin !== pin) {
-            msgEl.textContent = '❌ 비밀번호가 일치하지 않습니다!';
-            msgEl.classList.remove('hidden');
-            btn.disabled = false;
-            btn.textContent = '로그인 / 가입';
-            return;
-          }
-          userState.loggedIn = true;
-          userState.phone = fullPhone;
-          userState.pin = pin;
-          userState.isVip = Boolean(localAccounts[fullPhone].isVip);
-        } else {
-          localAccounts[fullPhone] = { pin, isVip: false };
-          localStorage.setItem('ksoft_local_accounts', JSON.stringify(localAccounts));
-          userState.loggedIn = true;
-          userState.phone = fullPhone;
-          userState.pin = pin;
-          userState.isVip = false;
+        if (userState.isVip && !userState.serverSaveData.isVip) {
+          await syncUserToServer();
         }
 
-        document.getElementById('loginBtn').textContent = `👤 ${tail.slice(0, 4)}****`;
+        updateLoginButtonUI();
         document.getElementById('loginModal').classList.add('hidden');
+        pinInputEl.value = '';
         applyVipUI();
+      } catch (err) {
+        msgEl.textContent = '⚠️ 게임 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+        msgEl.classList.remove('hidden');
       } finally {
-        btn.disabled = false;
-        btn.textContent = '로그인 / 가입';
+        confirmLoginBtn.disabled = false;
+        confirmLoginBtn.textContent = isRegisterMode ? '회원가입' : '로그인';
       }
     };
 
@@ -431,10 +557,10 @@
           if (res.ok && confirmData.success !== false) {
             userState.isVip = true;
             if (userState.phone) {
-              const localAccounts = JSON.parse(localStorage.getItem('ksoft_local_accounts') || '{}');
+              const localAccounts = JSON.parse(localStorage.getItem('aigame_vip_cache') || '{}');
               if (localAccounts[userState.phone]) {
                 localAccounts[userState.phone].isVip = true;
-                localStorage.setItem('ksoft_local_accounts', JSON.stringify(localAccounts));
+                localStorage.setItem('aigame_vip_cache', JSON.stringify(localAccounts));
               }
               await syncUserToServer();
             }
@@ -505,6 +631,7 @@
     }
 
     function startGame() {
+      resizeCanvas();
       gameState = 'PLAY';
       score = 0;
       stage = 1;
@@ -934,7 +1061,35 @@
       requestAnimationFrame(loop);
     }
 
+    document.getElementById('androidInstallBtn').addEventListener('click', () => {
+      const targetUrl = 'https://link.inpock.co.kr/aigame';
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const guideEl = document.getElementById('shortcutGuideText');
+
+      if (!isMobile) {
+        const urlContent = '[InternetShortcut]\r\nURL=' + targetUrl + '\r\n';
+        const blob = new Blob([urlContent], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'AI게임장_바로가기.url';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        guideEl.innerHTML = '바탕화면용 <b>AI게임장_바로가기.url</b> 파일이 다운로드되었습니다.<br/>실행하면 <b>AI게임장</b> 사이트가 바로 열립니다.';
+      } else {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        guideEl.innerHTML = '새 창으로 열린 <b>AI게임장</b> 페이지에서<br/>브라우저 메뉴(<b>⋮</b> 또는 <b>공유</b>) → <b>홈 화면에 추가</b>를 누르면 바탕화면 아이콘이 생성됩니다.';
+      }
+      document.getElementById('shortcutModal').classList.remove('hidden');
+    });
+
+    document.getElementById('closeShortcutBtn').addEventListener('click', () => {
+      document.getElementById('shortcutModal').classList.add('hidden');
+    });
+
     document.getElementById('startBtn').addEventListener('click', startGame);
+    restoreSessionFromToken();
     handlePaymentRedirect();
     loop();
   </script>
