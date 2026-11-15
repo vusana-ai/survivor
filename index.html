@@ -220,7 +220,7 @@
       throw lastErr || new Error('서버 연결 실패');
     }
     const TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
-    const ADMIN_VIP_PHONES = ['010-9485-0928'];
+    const ADMIN_VIP_PHONES = []; // VIP 여부는 서버 DB에서 관리
     const TOKEN_KEY = 'hero_clicker_jwt_token';
     const USER_KEY = 'hero_clicker_username';
 
@@ -379,7 +379,7 @@
         userState.loggedIn = true;
         userState.phone = userState.username.replace(/\D/g, '');
         userState.serverSaveData = data.saveData || {};
-        userState.isVip = Boolean(userState.serverSaveData.isVip || isAdminAccount(userState.username));
+        userState.isVip = Boolean(data.isVip || result.isVip || userState.serverSaveData.isVip || isAdminAccount(userState.username));
         updateLoginButtonUI();
         applyVipUI();
       } catch (e) {
@@ -488,7 +488,7 @@
         userState.pin = pin;
         userState.serverSaveData = result.saveData || initialSave;
         userState.isVip = Boolean(
-          userState.serverSaveData.isVip || isAdminAccount(userState.username)
+          result.isVip || userState.serverSaveData.isVip || isAdminAccount(userState.username)
         );
 
         localStorage.setItem(TOKEN_KEY, userState.token);
