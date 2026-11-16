@@ -10,13 +10,15 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://js.tosspayments.com/v2/standard"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; overflow: hidden; background: #020617; height: 100vh; height: 100dvh; }
+    body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; overflow-x: hidden; overflow-y: auto; background: #020617; min-height: 100vh; min-height: 100dvh; }
     canvas { touch-action: none; }
     .hidden { display: none !important; }
   </style>
 </head>
-<body class="text-slate-100 h-screen flex flex-col items-center justify-between p-2 select-none">
+<body class="text-slate-100 min-h-screen flex flex-col items-center pb-4 gap-3 select-none">
 
+  <!-- 첫 화면 전체(100dvh)를 채우는 게임 플레이 영역 -->
+  <div class="w-full max-w-md h-[100dvh] flex flex-col justify-between p-2 shrink-0">
   <!-- 최상단 계정 / VIP 바 -->
   <div class="w-full max-w-md flex items-center justify-between px-1 mb-1 z-20">
     <div class="flex items-center gap-1.5">
@@ -55,7 +57,7 @@
   </header>
 
   <!-- 게임 캔버스 아레나 -->
-  <div class="relative w-full max-w-md flex-1 min-h-0 my-1.5 bg-slate-950 border-2 border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center">
+  <div class="relative w-full flex-1 min-h-0 my-1.5 bg-slate-950 border-2 border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center">
     <canvas id="gameCanvas" class="w-full h-full block"></canvas>
 
     <!-- 보스 경고 배너 -->
@@ -173,9 +175,26 @@
       </div>
     </div>
   </div>
+  </div><!-- /첫 화면 100dvh 게임 영역 끝 -->
+
+  <!-- 스크롤 아래 실시간 랭킹 (전화번호 중간자리 마스킹) -->
+  <section class="w-[calc(100%-1rem)] max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex flex-col gap-2 shadow-xl z-20">
+    <div class="flex items-center justify-between gap-2">
+      <div>
+        <div class="text-xs font-black text-rose-400">🏆 좀비 서바이벌 명예의 전당</div>
+        <div class="text-[10px] text-slate-400">최고 점수 기준 · 전화번호 중간자리 보호</div>
+      </div>
+      <button id="refreshRankingBtn" type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 cursor-pointer">🔄 새로고침</button>
+    </div>
+    <div class="rounded-lg border border-rose-500/25 px-3 py-1.5 flex justify-between items-center text-[11px] bg-slate-950/80">
+      <span class="text-slate-400">내 순위</span>
+      <span id="myRankDetailText" class="font-bold text-rose-300">로그인 후 플레이 시 등록</span>
+    </div>
+    <div id="rankingListContainer" class="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto"></div>
+  </section>
 
   <!-- 하단 안드로이드 바로가기 아이콘 카드 (PWA 원클릭 설치 + 바로가기 폴백) -->
-  <section class="w-full max-w-md bg-gradient-to-br from-slate-900 to-amber-950/30 border border-amber-500/35 rounded-2xl p-3 shadow-xl z-20">
+  <section class="w-[calc(100%-1rem)] max-w-md bg-gradient-to-br from-slate-900 to-amber-950/30 border border-amber-500/35 rounded-2xl p-3 shadow-xl z-20">
     <div class="flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5 text-left min-w-0">
         <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-xl shrink-0 overflow-hidden">
@@ -219,7 +238,15 @@
       }
       throw lastErr || new Error('서버 연결 실패');
     }
+    const GAME_ID = 'zombie_survival';
     const TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
+
+    function maskPhoneMiddle(name) {
+      const str = String(name || '');
+      const m = str.match(/^(01[016789])[-.\s]?(\d{3,4}|\*{3,4})[-.\s]?(\d{4}|\*{4})$/);
+      if (m) return `${m[1]}-****-${m[3]}`;
+      return str.replace(/(01[016789])[-.\s]?(\d{3,4})[-.\s]?(\d{4})/g, '$1-****-$3');
+    }
     const ADMIN_VIP_PHONES = []; // VIP 여부는 서버 DB에서 관리
     const TOKEN_KEY = 'hero_clicker_jwt_token';
     const USER_KEY = 'hero_clicker_username';
@@ -319,7 +346,7 @@
       const loginBtn = document.getElementById('loginBtn');
       if (userState.loggedIn && userState.username) {
         const parts = userState.username.split('-');
-        const shortLabel = parts.length === 3 ? `${parts[1]}-****` : userState.username;
+        const shortLabel = parts.length === 3 ? `****-${parts[2]}` : maskPhoneMiddle(userState.username);
         loginBtn.textContent = `👤 ${shortLabel}`;
       } else {
         loginBtn.textContent = '👤 로그인';
@@ -340,14 +367,16 @@
         };
         userState.serverSaveData = baseSave;
 
+        const bestZombieScore = Math.max(score, Number(baseSave.zombieSurvival?.score || 0));
         const res = await apiFetch('/api/save', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${userState.token}`
           },
-          body: JSON.stringify({ saveData: baseSave })
+          body: JSON.stringify({ gameId: GAME_ID, score: bestZombieScore, saveData: baseSave })
         });
+        if (res.ok) fetchAndRenderRanking();
         if (res.status === 401 || res.status === 403) {
           userState.loggedIn = false;
           userState.token = null;
@@ -379,7 +408,7 @@
         userState.loggedIn = true;
         userState.phone = userState.username.replace(/\D/g, '');
         userState.serverSaveData = data.saveData || {};
-        userState.isVip = Boolean(data.isVip || result.isVip || userState.serverSaveData.isVip || isAdminAccount(userState.username));
+        userState.isVip = Boolean(data.isVip || userState.serverSaveData.isVip || isAdminAccount(userState.username));
         updateLoginButtonUI();
         applyVipUI();
       } catch (e) {
@@ -1187,8 +1216,47 @@
       document.getElementById('shortcutModal').classList.add('hidden');
     });
 
+    async function fetchAndRenderRanking() {
+      const box = document.getElementById('rankingListContainer');
+      const myEl = document.getElementById('myRankDetailText');
+      if (!box || !myEl) return;
+      try {
+        const headers = userState.token ? { 'Authorization': `Bearer ${userState.token}` } : {};
+        const res = await apiFetch(`/api/ranking?gameId=${GAME_ID}`, { headers });
+        const data = await res.json();
+        if (!res.ok) throw new Error();
+        const rankings = data.rankings || [];
+        if (data.myRank) {
+          myEl.textContent = `${data.totalPlayers || rankings.length}명 중 ${data.myRank.rank}위 · ${(data.myRank.score || 0).toLocaleString()}점`;
+        } else if (userState.loggedIn) {
+          myEl.textContent = '플레이 완료 시 순위 자동 등록';
+        } else {
+          myEl.textContent = '로그인 후 플레이 시 등록';
+        }
+        box.innerHTML = '';
+        if (rankings.length === 0) {
+          box.innerHTML = '<div class="text-center text-[11px] text-slate-500 py-3">아직 등록된 랭킹이 없습니다.</div>';
+          return;
+        }
+        rankings.forEach(it => {
+          const row = document.createElement('div');
+          row.className = 'rounded-lg px-3 py-2 border bg-slate-950 border-slate-800 flex items-center justify-between gap-2 text-[11px]' + (it.isMe ? ' ring-1 ring-rose-400' : '');
+          row.innerHTML =
+            '<div class="min-w-0 font-bold text-slate-100 truncate">' +
+              it.rank + '. ' + maskPhoneMiddle(it.maskedName) +
+              (it.isMe ? ' <span class="text-rose-300 text-[10px]">(나)</span>' : '') +
+            '</div>' +
+            '<span class="font-black text-rose-400 shrink-0">' + (it.score || 0).toLocaleString() + ' 점</span>';
+          box.appendChild(row);
+        });
+      } catch (e) {
+        box.innerHTML = '<div class="text-center text-[11px] text-slate-500 py-3">랭킹 서버 연결 대기 중</div>';
+      }
+    }
+    document.getElementById('refreshRankingBtn').addEventListener('click', fetchAndRenderRanking);
+
     document.getElementById('startBtn').addEventListener('click', startGame);
-    restoreSessionFromToken();
+    restoreSessionFromToken().then(fetchAndRenderRanking);
     handlePaymentRedirect();
     loop();
   </script>
