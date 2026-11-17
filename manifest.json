@@ -1,7 +1,8 @@
 {
-  "name": "AI게임장",
-  "short_name": "AI게임장",
-  "start_url": "./arcade.html",
+  "id": "./",
+  "name": "좀비 서라이벌 — 로그라이크 액션",
+  "short_name": "좀비 서라이벌",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#020617",
@@ -9,13 +10,13 @@
   "icons": [
     {
       "src": "./icon.png",
-      "sizes": "512x512",
+      "sizes": "192x192 512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "./icon.png",
-      "sizes": "512x512",
+      "sizes": "192x192 512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
